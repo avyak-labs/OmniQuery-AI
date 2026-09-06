@@ -84,3 +84,12 @@ OmniQuery-AI/
 ├── requirements.txt           # Python dependencies
 └── README.md
 ```
+
+---
+
+## 📚 Curriculum & Engineering Guides
+
+* **[Master Curriculum & Architecture Modules (01–15)](docs/README.md)**: In-depth guides covering Dense Embeddings, BM25, RRF, Cross-Encoders, LangGraph, RAGAS, and Context Engineering.
+* **[Canishe's Context Engineering & AGY Mastery Guide](CANISHE_CONTEXT_ENGINEERING_KIT_MASTERY_GUIDE.md)**: Deep-dive into transformer attention physics, Lost-in-the-Middle mitigation, observation masking, and 4 high-yield Bangalore interview answers.
+* **[Canishe's Week 2 Retrospective & Mastery Guide](CANISHE_WEEK_2_RETROSPECTIVE_AND_AGY_MASTERY_GUIDE.md)**: Text-to-SQL architecture walkthrough and communication efficiency analysis.
+

@@ -70,12 +70,14 @@ flowchart TD
 | **12** | **Enterprise PDF Ingestion & Dual Indexing** | Page-by-page parsing, 500/50 token chunking, 384-d `all-MiniLM-L6-v2` embeddings, and dual `vector(384)` + `tsvector` PostgreSQL storage. | [12_CONCEPT_PDF_INGESTION_AND_DUAL_INDEXING.md](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/docs/12_CONCEPT_PDF_INGESTION_AND_DUAL_INDEXING.md) |
 | **13** | **Dual-Engine Generation & Graceful Degradation** | Combining stochastic LLMs (Gemini 1.5 Flash) with deterministic heuristics for 99.9% uptime, $0.00 test automation, and zero vendor lock-in. | [13_CONCEPT_DUAL_ENGINE_GENERATION_AND_GRACEFUL_DEGRADATION.md](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/docs/13_CONCEPT_DUAL_ENGINE_GENERATION_AND_GRACEFUL_DEGRADATION.md) |
 | **14** | **Human-AI Trust & Silent Degradation** | Avoiding the silent degradation trap: Provenance Badging, Multi-Model Circuit Breakers (Groq Llama 3.1), Semantic Caching, and Guided Refusals. | [14_CONCEPT_HUMAN_AI_TRUST_AND_SILENT_DEGRADATION.md](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/docs/14_CONCEPT_HUMAN_AI_TRUST_AND_SILENT_DEGRADATION.md) |
+| **15** | **Context Engineering & Multi-Agent Isolation** | The physics of transformer attention, Lost-in-the-Middle mitigation, Observation Masking, and LangGraph discrete state isolation. | [15_CONCEPT_CONTEXT_ENGINEERING_AND_MULTI_AGENT_PATTERNS.md](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/docs/15_CONCEPT_CONTEXT_ENGINEERING_AND_MULTI_AGENT_PATTERNS.md) |
 
 ---
 
 
 ## 🎯 High-Level Architecture, Retrospectives & Reviews
 
+* **Canishe's Context Engineering & AGY Mastery Guide:** [CANISHE_CONTEXT_ENGINEERING_KIT_MASTERY_GUIDE.md](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/CANISHE_CONTEXT_ENGINEERING_KIT_MASTERY_GUIDE.md)
 * **Canishe's Week 3 Action Plan (RAGAS Evaluation):** [CANISHE_ACTION_PLAN_WEEK_3_RAGAS_EVALUATION.md](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/CANISHE_ACTION_PLAN_WEEK_3_RAGAS_EVALUATION.md)
 * **Canishe's Week 2 Retrospective & AGY Mastery Guide:** [CANISHE_WEEK_2_RETROSPECTIVE_AND_AGY_MASTERY_GUIDE.md](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/CANISHE_WEEK_2_RETROSPECTIVE_AND_AGY_MASTERY_GUIDE.md)
 * **Architect Review: Negative & Edge Testing:** [ARCHITECT_REVIEW_NEGATIVE_AND_EDGE_TESTING.md](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/review_comments/ARCHITECT_REVIEW_NEGATIVE_AND_EDGE_TESTING.md)
