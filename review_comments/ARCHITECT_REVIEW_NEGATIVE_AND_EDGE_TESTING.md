@@ -1,7 +1,7 @@
 # 🛡️ Senior GenAI Architect Code Review
 
 **Repository:** `OmniQuery-AI`  
-**Branch Under Review:** [`feature/negative-and-edge-testing`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/)  
+**Branch Under Review:** [`feature/negative-and-edge-testing`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/)  
 **Commit:** [`dec76a3`](https://github.com/ccanishe/OmniQuery-AI/commit/dec76a38135397894c074761ec0d4e32dca38c69) (`feat(eval): add comprehensive negative scenario test suite and harden error boundaries`)  
 **Author:** Canishe (`ccanishe@gmail.com`)  
 **Reviewer:** Senior GenAI & Enterprise AI Architect  
@@ -47,7 +47,7 @@ flowchart TD
 
 ## 🌟 Architectural Strengths (What Was Done Exceptionally Well)
 
-### 1. Ingress Layer: Hardened Pydantic Guardrails ([`app/main.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/main.py#L23-L39))
+### 1. Ingress Layer: Hardened Pydantic Guardrails ([`app/main.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/main.py#L23-L39))
 ```python
 class QueryRequest(BaseModel):
     query: str = Field(
@@ -73,7 +73,7 @@ class QueryRequest(BaseModel):
 
 ---
 
-### 2. Compute Efficiency: Early-Exit Guardrail in Retrieval ([`app/rag/hybrid_retriever.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/rag/hybrid_retriever.py#L107-L110))
+### 2. Compute Efficiency: Early-Exit Guardrail in Retrieval ([`app/rag/hybrid_retriever.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/rag/hybrid_retriever.py#L107-L110))
 ```python
 clean_query = query.strip() if query else ""
 if not clean_query:
@@ -85,7 +85,7 @@ if not clean_query:
 
 ---
 
-### 3. Fault-Tolerant Re-ranking on Corrupted Metadata ([`app/rag/reranker.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/rag/reranker.py#L53-L60))
+### 3. Fault-Tolerant Re-ranking on Corrupted Metadata ([`app/rag/reranker.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/rag/reranker.py#L53-L60))
 ```python
 passages = []
 for idx, doc in enumerate(candidates):
@@ -103,7 +103,7 @@ for idx, doc in enumerate(candidates):
 
 ---
 
-### 4. Anti-Hallucination Zero-Context Fallback ([`app/rag/synthesizer.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/rag/synthesizer.py#L47-L49))
+### 4. Anti-Hallucination Zero-Context Fallback ([`app/rag/synthesizer.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/rag/synthesizer.py#L47-L49))
 ```python
 if not chunks:
     return "I could not find any relevant information in the enterprise knowledge base for your query."
@@ -114,7 +114,7 @@ if not chunks:
 
 ---
 
-### 5. Security Sanitization of Error Boundaries ([`app/agents/router.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/agents/router.py#L73-L81) & [`app/main.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/main.py#L72-L77))
+### 5. Security Sanitization of Error Boundaries ([`app/agents/router.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/router.py#L73-L81) & [`app/main.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/main.py#L72-L77))
 ```python
 except Exception as e:
     # Log error internally for developers/monitoring
@@ -136,7 +136,7 @@ except Exception as e:
 While this pull request is well-crafted, a Lead / Principal Architect would request the following **4 refinements** before production release:
 
 ### Finding 1: Substring Collision in Keyword Intent Router
-* **Location:** [`app/agents/router.py:L46-L51`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/agents/router.py#L46-L51)
+* **Location:** [`app/agents/router.py:L46-L51`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/router.py#L46-L51)
 * **Issue:** The intent classifier uses naive Python substring matching:
   ```python
   if any(k in query for k in sql_keywords):
@@ -154,7 +154,7 @@ While this pull request is well-crafted, a Lead / Principal Architect would requ
 ---
 
 ### Finding 2: Unhandled Exception in Streaming SSE Endpoint
-* **Location:** [`app/main.py:L80-L102`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/main.py#L80-L102)
+* **Location:** [`app/main.py:L80-L102`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/main.py#L80-L102)
 * **Issue:** In `handle_query` (the synchronous endpoint), Canishe added a clean `try / except Exception` boundary. However, in `stream_query` (the SSE streaming endpoint):
   ```python
   async def token_generator():
@@ -179,7 +179,7 @@ While this pull request is well-crafted, a Lead / Principal Architect would requ
 ---
 
 ### Finding 3: Missing Integration Test for FastAPI Pydantic Bounds
-* **Location:** [`tests/test_edge_and_negative_cases.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/tests/test_edge_and_negative_cases.py#L1-L11)
+* **Location:** [`tests/test_edge_and_negative_cases.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/tests/test_edge_and_negative_cases.py#L1-L11)
 * **Issue:** The module docstring explicitly lists:
   > *"7. FastAPI Pydantic schema validation errors"*
   
@@ -204,7 +204,7 @@ While this pull request is well-crafted, a Lead / Principal Architect would requ
 ---
 
 ### Finding 4: Asynchronous Test Ergonomics
-* **Location:** [`tests/test_edge_and_negative_cases.py:L91`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/tests/test_edge_and_negative_cases.py#L91)
+* **Location:** [`tests/test_edge_and_negative_cases.py:L91`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/tests/test_edge_and_negative_cases.py#L91)
 * **Issue:** Canishe used `asyncio.run(synthesize_answer(...))` inside synchronous test functions:
   ```python
   def test_synthesizer_zero_context_fallback():

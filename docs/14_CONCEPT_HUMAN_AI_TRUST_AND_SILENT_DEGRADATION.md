@@ -1,7 +1,7 @@
 # 14. Concept: Human-AI Trust, Silent Degradation & Graceful Fallback Strategies
 
 **Module:** `14_CONCEPT_HUMAN_AI_TRUST_AND_SILENT_DEGRADATION.md`  
-**System Location:** [`app/agents/sql_agent.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/agents/sql_agent.py) & [`app/agents/router.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/agents/router.py)  
+**System Location:** [`app/agents/sql_agent.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/sql_agent.py) & [`app/agents/router.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/router.py)  
 **Target Roles:** Senior GenAI Engineer, LLM Product Architect (Track C: ₹10–16 LPA)  
 
 ---

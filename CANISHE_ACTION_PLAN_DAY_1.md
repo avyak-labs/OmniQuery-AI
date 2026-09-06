@@ -36,16 +36,16 @@ flowchart LR
 
 Open these 4 markdown guides in your VS Code editor. Read each one carefully and understand the real-world analogies:
 
-1. 📖 [**`docs/09_CONCEPT_SKUS_AND_ALPHANUMERIC_BLINDSPOTS.md`**](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/docs/09_CONCEPT_SKUS_AND_ALPHANUMERIC_BLINDSPOTS.md)
+1. 📖 [**`docs/09_CONCEPT_SKUS_AND_ALPHANUMERIC_BLINDSPOTS.md`**](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/docs/09_CONCEPT_SKUS_AND_ALPHANUMERIC_BLINDSPOTS.md)
    * **What to learn:** Why dense vector models (like OpenAI or HuggingFace) confuse `SKU-4001` with `SKU-4002` (0.98 similarity), and why combining BM25 keyword search + relational SQL solves catalog hallucinations.
    
-2. 📖 [**`docs/10_CONCEPT_INTENT_CLASSIFICATION_AND_ROUTING.md`**](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/docs/10_CONCEPT_INTENT_CLASSIFICATION_AND_ROUTING.md)
+2. 📖 [**`docs/10_CONCEPT_INTENT_CLASSIFICATION_AND_ROUTING.md`**](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/docs/10_CONCEPT_INTENT_CLASSIFICATION_AND_ROUTING.md)
    * **What to learn:** How the LangGraph Classifier Node decides between `rag`, `sql`, and `direct` using Keyword Heuristics, Semantic Vector Routers, and LLM Structured JSON.
 
-3. 📖 [**`docs/11_CONCEPT_RECIPROCAL_RANK_FUSION_WORKED_EXAMPLES.md`**](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/docs/11_CONCEPT_RECIPROCAL_RANK_FUSION_WORKED_EXAMPLES.md)
+3. 📖 [**`docs/11_CONCEPT_RECIPROCAL_RANK_FUSION_WORKED_EXAMPLES.md`**](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/docs/11_CONCEPT_RECIPROCAL_RANK_FUSION_WORKED_EXAMPLES.md)
    * **What to learn:** Why you cannot simply add dense and sparse raw scores together (apples vs. oranges), and how the formula $\text{RRF Score} = \sum \frac{1}{60 + \text{rank}}$ rewards cross-engine agreement.
 
-4. 📖 [**`docs/12_CONCEPT_PDF_INGESTION_AND_DUAL_INDEXING.md`**](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/docs/12_CONCEPT_PDF_INGESTION_AND_DUAL_INDEXING.md)
+4. 📖 [**`docs/12_CONCEPT_PDF_INGESTION_AND_DUAL_INDEXING.md`**](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/docs/12_CONCEPT_PDF_INGESTION_AND_DUAL_INDEXING.md)
    * **What to learn:** How PDF text is parsed page-by-page, chunked into 500-token blocks with 50-token overlap, and stored in PostgreSQL with both `vector(384)` and `tsvector` columns.
 
 ---
@@ -107,7 +107,7 @@ pytest tests/test_hybrid_rag.py -v
 
 ### Step 4: Build the Relational Database Seeder (`app/db_seed.py`) (30 Mins)
 
-To prepare for our **Week 2 Text-to-SQL Engine**, create a new script named `app/db_seed.py` that populates sample data into the [`customers`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/models.py#L62), [`products`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/models.py#L78), and [`orders`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/models.py#L95) tables.
+To prepare for our **Week 2 Text-to-SQL Engine**, create a new script named `app/db_seed.py` that populates sample data into the [`customers`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/models.py#L62), [`products`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/models.py#L78), and [`orders`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/models.py#L95) tables.
 
 Create `app/db_seed.py` with the following code and run it:
 

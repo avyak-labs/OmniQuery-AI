@@ -67,7 +67,7 @@ flowchart LR
 Uses PostgreSQL `to_tsvector('english', content)` and `ts_rank_cd` to find the exact character-level token `SKU-NK-AIR-09` without semantic blurring.
 
 ### 2. Structured Relational Tables (for Operational Data):
-In [`app/models.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/models.py#L78-L92), our `Product` table stores the `sku` column as an indexed unique string:
+In [`app/models.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/models.py#L78-L92), our `Product` table stores the `sku` column as an indexed unique string:
 ```sql
 SELECT name, price, stock_quantity 
 FROM products 

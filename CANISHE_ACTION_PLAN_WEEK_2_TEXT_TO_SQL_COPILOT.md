@@ -5,12 +5,12 @@
 
 ## 🎯 Primary Objectives for Today
 
-1. **Build the Enterprise Text-to-SQL Engine:** Implement [`app/agents/sql_agent.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/agents/sql_agent.py) from scratch.
+1. **Build the Enterprise Text-to-SQL Engine:** Implement [`app/agents/sql_agent.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/sql_agent.py) from scratch.
 2. **Create Automated Schema Inspector:** Dynamically inspect PostgreSQL tables (`customers`, `products`, `orders`, `order_items`), column data types, and foreign key relationships.
 3. **Implement Safe Parameterized SQL Generator:** Convert natural language questions into valid PostgreSQL queries using Google Gemini 1.5 Flash (with deterministic fallback for offline testing).
 4. **Implement Read-Only Execution Sandbox:** Block SQL injection, prevent data mutation (`DROP`, `DELETE`, `UPDATE`, `INSERT`, `ALTER`, `TRUNCATE`), and enforce query limits.
-5. **Connect LangGraph Router:** Replace the Week 1 placeholder in [`app/agents/router.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/agents/router.py) so live SQL queries execute and render formatted Markdown tables in the Streamlit UI.
-6. **Write Automated Unit Tests:** Build [`tests/test_text_to_sql.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/tests/test_text_to_sql.py) to test schema inspection, SQL security validation, and query execution.
+5. **Connect LangGraph Router:** Replace the Week 1 placeholder in [`app/agents/router.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/router.py) so live SQL queries execute and render formatted Markdown tables in the Streamlit UI.
+6. **Write Automated Unit Tests:** Build [`tests/test_text_to_sql.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/tests/test_text_to_sql.py) to test schema inspection, SQL security validation, and query execution.
 7. **Submit a Pull Request (PR):** Push your branch `feature/text-to-sql-copilot` and open a PR for code review.
 
 ---
@@ -64,7 +64,7 @@ git checkout -b feature/text-to-sql-copilot
 
 ### 💻 Step 2: Implement `app/agents/sql_agent.py` (45 Mins)
 
-Create the new file [`app/agents/sql_agent.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/agents/sql_agent.py) with the following complete, modular implementation:
+Create the new file [`app/agents/sql_agent.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/sql_agent.py) with the following complete, modular implementation:
 
 ```python
 """
@@ -322,7 +322,7 @@ async def run_text_to_sql_pipeline(user_query: str) -> Tuple[str, str, str]:
 
 ### 🔌 Step 3: Connect SQL Agent into `app/agents/router.py` (15 Mins)
 
-Open [`app/agents/router.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/agents/router.py).
+Open [`app/agents/router.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/router.py).
 
 1. Import `run_text_to_sql_pipeline` at the top of the file:
    ```python
@@ -353,7 +353,7 @@ Open [`app/agents/router.py`](file:///Users/jnarayanassamy/personal/ai/canishe/O
 
 ### 🧪 Step 4: Build Automated Unit Tests (`tests/test_text_to_sql.py`) (20 Mins)
 
-Create [`tests/test_text_to_sql.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/tests/test_text_to_sql.py):
+Create [`tests/test_text_to_sql.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/tests/test_text_to_sql.py):
 
 ```python
 """

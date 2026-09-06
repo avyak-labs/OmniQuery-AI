@@ -7,7 +7,7 @@
 
 1. **Adopt Production-Grade Mindset:** Transition from happy-path development to enterprise resilience.
 2. **Create a Dedicated Feature Branch:** `feature/negative-and-edge-testing`.
-3. **Implement the Negative & Edge Test Suite:** Build [`tests/test_edge_and_negative_cases.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/tests/test_edge_and_negative_cases.py) covering 7 critical failure modes.
+3. **Implement the Negative & Edge Test Suite:** Build [`tests/test_edge_and_negative_cases.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/tests/test_edge_and_negative_cases.py) covering 7 critical failure modes.
 4. **Harden Application Code:** Patch input sanitization, Pydantic bounds, zero-chunk fallbacks, and error boundaries across `app/main.py`, `app/rag/hybrid_retriever.py`, `app/rag/synthesizer.py`, and `app/agents/router.py`.
 5. **Verify 100% Test Pass Rate:** Run Pytest and ensure all unit and integration tests pass cleanly.
 6. **Submit a Pull Request (PR):** Push your branch and open a PR on GitHub for code review.
@@ -59,7 +59,7 @@ git checkout -b feature/negative-and-edge-testing
 
 ### 🧪 Task 2: Build the Negative & Edge Test Suite (`tests/test_edge_and_negative_cases.py`) (45 Mins)
 
-Create a new test file named [`tests/test_edge_and_negative_cases.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/tests/test_edge_and_negative_cases.py) with the following complete test suite:
+Create a new test file named [`tests/test_edge_and_negative_cases.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/tests/test_edge_and_negative_cases.py) with the following complete test suite:
 
 ```python
 """
@@ -190,7 +190,7 @@ def test_router_ambiguous_cross_domain_query():
 
 Now, let's fix and harden the core files to make all negative tests pass and make the backend production-safe:
 
-#### 1. Harden [`app/main.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/main.py)
+#### 1. Harden [`app/main.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/main.py)
 * **Goal:** Add Pydantic field validation (`min_length=1`, `max_length=1000`), whitespace stripping, and sanitized error responses.
 * **Update `QueryRequest` in `app/main.py`:**
 
@@ -220,7 +220,7 @@ Ensure endpoints catch unhandled errors and return clean HTTP 500 JSON without e
 
 ---
 
-#### 2. Harden [`app/rag/hybrid_retriever.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/rag/hybrid_retriever.py)
+#### 2. Harden [`app/rag/hybrid_retriever.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/rag/hybrid_retriever.py)
 * **Goal:** Guard against empty queries, queries with only punctuation, and database connection timeouts.
 * In `retrieve_context(query: str, top_k: int = 3)`:
   ```python
@@ -231,7 +231,7 @@ Ensure endpoints catch unhandled errors and return clean HTTP 500 JSON without e
 
 ---
 
-#### 3. Harden [`app/rag/reranker.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/rag/reranker.py)
+#### 3. Harden [`app/rag/reranker.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/rag/reranker.py)
 * **Goal:** Ensure `rerank_passages` safely filters out candidates with `None` content before building the FlashRank request:
   ```python
   passages = []
@@ -247,7 +247,7 @@ Ensure endpoints catch unhandled errors and return clean HTTP 500 JSON without e
 
 ---
 
-#### 4. Harden [`app/agents/router.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/agents/router.py)
+#### 4. Harden [`app/agents/router.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/router.py)
 * **Goal:** Prevent leaking raw exception details (`f"Error during document retrieval: {str(e)}"`) to the client:
   ```python
   except Exception as e:

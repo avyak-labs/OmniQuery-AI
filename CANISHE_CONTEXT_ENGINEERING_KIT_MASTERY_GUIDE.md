@@ -83,7 +83,7 @@ The `context-engineering-kit` codifies solutions to the five classic failure mod
 ## 🛠️ 3. Inside the `context-engineering-kit` in Antigravity (`agy`)
 
 Antigravity has imported the entire toolkit at:
-`/Users/jnarayanassamy/.gemini/config/plugins/context-engineering-kit/`
+`/Users/janar/.gemini/config/plugins/context-engineering-kit/`
 
 It injects **two superpowers** directly into the AGY runtime:
 
@@ -119,12 +119,12 @@ The agent loads these on-demand using **Progressive Disclosure**:
 
 You are already practicing Context Engineering in OmniQuery-AI! Here is how your code connects to these theoretical principles:
 
-### 1. Cross-Encoder Reranking as Context Pruning ([`app/retrieval/reranker.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/retrieval/reranker.py))
+### 1. Cross-Encoder Reranking as Context Pruning ([`app/rag/reranker.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/rag/reranker.py))
 * **The Code:** Hybrid RRF combines vector and BM25 results to produce **20 candidate chunks**.
 * **The Context Engineering:** Passing 20 chunks to Gemini 1.5 Flash would waste 10,000 tokens and trigger the Lost-in-the-Middle trap.
 * **The Solution:** Our `FlashRank` Cross-Encoder performs joint attention ($Q \times D$) to pick **only the top 3 highest-signal chunks**. We pass less than 800 tokens to the Synthesizer.
 
-### 2. Schema Catalog Grounding as Progressive Disclosure ([`app/agents/sql_agent.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/agents/sql_agent.py))
+### 2. Schema Catalog Grounding as Progressive Disclosure ([`app/agents/sql_agent.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/sql_agent.py))
 * **The Code:** We provide a compact schema catalog string defining only the 4 operational tables (`customers`, `products`, `orders`, `order_items`).
 * **The Context Engineering:** We do not dump thousands of lines of database migration history or full system catalogs. We provide the minimal schema necessary for the LLM to write precise relational joins.
 
@@ -132,7 +132,7 @@ You are already practicing Context Engineering in OmniQuery-AI! Here is how your
 * **The Code:** The SQL validator automatically injects `LIMIT 50` if missing.
 * **The Context Engineering:** If a user queries *"Show all customer orders"*, a query returning 500,000 database rows would blow up the FastAPI memory buffer and exceed the LLM's context window. Capping rows is a classic **Observation Masking** technique.
 
-### 4. LangGraph State Machine as Context Partitioning ([`app/agents/router.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/agents/router.py))
+### 4. LangGraph State Machine as Context Partitioning ([`app/agents/router.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/router.py))
 * **The Code:** `AgentState` contains explicit, typed fields (`query`, `intent`, `retrieved_docs`, `sql_query`, `sql_result`, `final_response`).
 * **The Context Engineering:** Each LangGraph node only reads and updates its designated keys. The SQL node doesn't carry bloated vector chunk payloads; the RAG node doesn't carry SQL connection cursors.
 
@@ -243,6 +243,6 @@ Here is how you use Context Engineering concepts to blow the interviewers away:
 ## 📋 7. Action Items for Canishe
 
 - [ ] **Verify Plugin in AGY:** Run `agy plugin list` in your terminal to verify `context-engineering-kit` is loaded.
-- [ ] **Read Module 15:** Review [`docs/15_CONCEPT_CONTEXT_ENGINEERING_AND_MULTI_AGENT_PATTERNS.md`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/docs/15_CONCEPT_CONTEXT_ENGINEERING_AND_MULTI_AGENT_PATTERNS.md).
+- [ ] **Read Module 15:** Review [`docs/15_CONCEPT_CONTEXT_ENGINEERING_AND_MULTI_AGENT_PATTERNS.md`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/docs/15_CONCEPT_CONTEXT_ENGINEERING_AND_MULTI_AGENT_PATTERNS.md).
 - [ ] **Practice the 4 Interview Answers:** Rehearse the 4 answers aloud until you can explain them smoothly and confidently without looking at notes.
 - [ ] **Apply TDD in Week 3 Milestone 2:** In your next coding session with Uncle Janar, explicitly prompt AGY: *"Act as `developer` subagent using the `test-driven-development` skill to implement the RAGAS evaluation pipeline."*

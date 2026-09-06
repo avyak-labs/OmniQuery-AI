@@ -1,7 +1,7 @@
 # 15. Concept: Context Engineering, Attention Budgets & Multi-Agent Isolation Patterns
 
 **Module:** `15_CONCEPT_CONTEXT_ENGINEERING_AND_MULTI_AGENT_PATTERNS.md`  
-**System Location:** [`app/retrieval/reranker.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/retrieval/reranker.py), [`app/agents/router.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/agents/router.py), [`app/agents/sql_agent.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/agents/sql_agent.py)  
+**System Location:** [`app/rag/reranker.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/rag/reranker.py), [`app/agents/router.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/router.py), [`app/agents/sql_agent.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/sql_agent.py)  
 **Target Roles:** Senior GenAI Engineer, LLM Application Architect (Track C: ₹10–16 LPA)  
 
 ---
@@ -80,10 +80,10 @@ Store long-term state, architectural decisions, and intermediate outputs outside
 
 | Architecture Component | OmniQuery-AI Module | Naive Implementation | OmniQuery-AI Context Engineered Implementation |
 | :--- | :--- | :--- | :--- |
-| **Document Retrieval** | [`app/retrieval/reranker.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/retrieval/reranker.py) | Dump 20 vector search chunks into the LLM prompt (8,000+ tokens). | Hybrid RRF + `FlashRank` Cross-Encoder joint attention cuts candidate pool to **top 3 high-signal chunks** (<800 tokens). Eliminates Lost-in-the-Middle. |
-| **Database Schema** | [`app/agents/sql_agent.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/agents/sql_agent.py) | Dump entire Postgres schema DDL, system tables, and migration history (15,000+ tokens). | Curated, high-signal schema catalog with explicit Foreign Key mappings for 4 business tables. Zero hallucinated table names. |
-| **Query Output Safety** | [`app/agents/sql_agent.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/agents/sql_agent.py) | Allow unbounded `SELECT *` returning 100,000 rows into memory and LLM prompt. | AST validation sandbox injects automatic `LIMIT 50` and converts tuples into structured GitHub markdown tables. |
-| **Agent Orchestration** | [`app/agents/router.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/agents/router.py) | Single sequential chain concatenating user prompts, search results, and SQL queries. | LangGraph state machine with discrete, typed `AgentState` schema. Nodes run in isolated scopes with zero cross-talk pollution. |
+| **Document Retrieval** | [`app/rag/reranker.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/rag/reranker.py) | Dump 20 vector search chunks into the LLM prompt (8,000+ tokens). | Hybrid RRF + `FlashRank` Cross-Encoder joint attention cuts candidate pool to **top 3 high-signal chunks** (<800 tokens). Eliminates Lost-in-the-Middle. |
+| **Database Schema** | [`app/agents/sql_agent.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/sql_agent.py) | Dump entire Postgres schema DDL, system tables, and migration history (15,000+ tokens). | Curated, high-signal schema catalog with explicit Foreign Key mappings for 4 business tables. Zero hallucinated table names. |
+| **Query Output Safety** | [`app/agents/sql_agent.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/sql_agent.py) | Allow unbounded `SELECT *` returning 100,000 rows into memory and LLM prompt. | AST validation sandbox injects automatic `LIMIT 50` and converts tuples into structured GitHub markdown tables. |
+| **Agent Orchestration** | [`app/agents/router.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/router.py) | Single sequential chain concatenating user prompts, search results, and SQL queries. | LangGraph state machine with discrete, typed `AgentState` schema. Nodes run in isolated scopes with zero cross-talk pollution. |
 
 ---
 
@@ -96,7 +96,7 @@ Store long-term state, architectural decisions, and intermediate outputs outside
 > *"In OmniQuery-AI, we treat LLM context as a precious, finite attention budget. When chaining multiple tool nodes, naive agent implementations allow conversational memory and tool outputs to accumulate unbounded, resulting in two fatal bugs: **State Explosion** (exceeding token limits and ballooning latency) and **Context Poisoning** (where an intermediate hallucination cascades into subsequent tool parameters).
 >
 > We solved this in three architectural steps:
-> 1. **Typed State Isolation:** In [`app/agents/router.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/agents/router.py), our `AgentState` schema explicitly partitions keys (`query`, `intent`, `retrieved_docs`, `sql_query`, `sql_result`). Each node in the LangGraph graph is functionally pure: it consumes only its declared inputs and updates its own output key.
+> 1. **Typed State Isolation:** In [`app/agents/router.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/router.py), our `AgentState` schema explicitly partitions keys (`query`, `intent`, `retrieved_docs`, `sql_query`, `sql_result`). Each node in the LangGraph graph is functionally pure: it consumes only its declared inputs and updates its own output key.
 > 2. **Verification Barriers:** Our Text-to-SQL node passes generated queries through an AST security sandbox before database execution. If the query violates read-only syntax, it triggers an immediate sanitized retry without persisting the malicious or malformed SQL into the conversation history.
 > 3. **Observation Masking:** Database result tuples are formatted into compact markdown tables capped at 50 rows, and retrieved chunks are reranked via `FlashRank` to top 3 before hitting the synthesizer.
 >

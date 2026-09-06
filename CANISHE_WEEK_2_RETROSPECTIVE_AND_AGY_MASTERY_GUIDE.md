@@ -5,7 +5,7 @@
 
 ## 📌 Executive Summary
 
-On **September 2, 2026** (05:27 AM – 07:20 AM IST / late evening Dallas time), Canishe executed the implementation for **Week 2: Autonomous Text-to-SQL Copilot Engine** ([`CANISHE_ACTION_PLAN_WEEK_2_TEXT_TO_SQL_COPILOT.md`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/CANISHE_ACTION_PLAN_WEEK_2_TEXT_TO_SQL_COPILOT.md)).
+On **September 2, 2026** (05:27 AM – 07:20 AM IST / late evening Dallas time), Canishe executed the implementation for **Week 2: Autonomous Text-to-SQL Copilot Engine** ([`CANISHE_ACTION_PLAN_WEEK_2_TEXT_TO_SQL_COPILOT.md`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/CANISHE_ACTION_PLAN_WEEK_2_TEXT_TO_SQL_COPILOT.md)).
 
 ### 🎯 Scorecard & Key Deliverables
 * **Feature Branch:** `feature/text-to-sql-copilot`
@@ -37,7 +37,7 @@ flowchart TD
 
 ### Key Modules Implemented:
 
-1. **Schema Catalog & Grounding ([`app/agents/sql_agent.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/agents/sql_agent.py)):**
+1. **Schema Catalog & Grounding ([`app/agents/sql_agent.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/sql_agent.py)):**
    * Supplies exact table definitions for `customers`, `products` (SKUs, stock, pricing), `orders` (status, totals), and `order_items` (quantities, foreign keys).
    * Prevents hallucinated table and column names by grounding the LLM prompt with strict relational schema context.
 
@@ -56,7 +56,7 @@ flowchart TD
    * Converts raw SQLAlchemy row tuples into clean GitHub-flavored Markdown tables.
    * Appends a collapsible SQL code block for auditing and explainability.
 
-5. **LangGraph Router Integration ([`app/agents/router.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/agents/router.py)):**
+5. **LangGraph Router Integration ([`app/agents/router.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/router.py)):**
    * Replaced the Week 1 placeholder in `sql_handler_node` to execute the full pipeline asynchronously and pass the formatted table directly to the Streamlit UI.
 
 ---
@@ -117,7 +117,7 @@ At Step 154, Canishe had the right instinct to ask for an explanation. To maximi
 
 ### 5. Automated Transcript & Diagnostic Tooling
 In Step 171, AGY spent 12+ tool cycles writing ad-hoc Python scripts to search internal brain directories for transcript files.
-* **Solution:** OmniQuery-AI now includes [`scripts/export_transcript.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/scripts/export_transcript.py), which can export clean session logs in a single second.
+* **Solution:** OmniQuery-AI now includes [`scripts/export_transcript.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/scripts/export_transcript.py), which can export clean session logs in a single second.
 
 ---
 

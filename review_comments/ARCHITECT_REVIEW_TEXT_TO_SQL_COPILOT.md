@@ -1,7 +1,7 @@
 # 🛡️ Senior AGI & GenAI Architect Code Review
 
 **Repository:** `OmniQuery-AI`  
-**Branch Under Review:** [`feature/text-to-sql-copilot`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/)  
+**Branch Under Review:** [`feature/text-to-sql-copilot`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/)  
 **Commit:** [`e3afdb4`](https://github.com/ccanishe/OmniQuery-AI/commit/e3afdb45e9f56fd8fbd350c8041ac8dfe8610709) (`feat(sql): implement autonomous Text-to-SQL copilot engine with read-only sandbox and table formatting`)  
 **Author:** Canishe (`ccanishe@gmail.com`)  
 **Reviewer:** Senior AGI & GenAI Systems Architect  
@@ -53,16 +53,16 @@ flowchart TD
 ## 🌟 Architectural Strengths (What Was Done Exceptionally Well)
 
 ### 1. Dual-Engine Generation (LLM + Deterministic Offline Fallback)
-* **Location:** [`app/agents/sql_agent.py:L125-L157`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/agents/sql_agent.py#L125-L157)
+* **Location:** [`app/agents/sql_agent.py:L125-L157`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/sql_agent.py#L125-L157)
 * **Architectural Rationale:** 
   * In production systems, cloud LLMs (Gemini, Claude, GPT-4) suffer from network timeouts, quota rate limits (HTTP 429), and occasional outages.
   * Canishe implemented an **intelligent deterministic fallback generator** matching key analytical intents (orders by status, stock levels, high-tier customers, revenue aggregation).
   * This guarantees that local automated test suites, offline developer onboarding, and CI/CD pipelines function seamlessly without requiring a live, paid API key.
-  * Full concept reference: [`docs/13_CONCEPT_DUAL_ENGINE_GENERATION_AND_GRACEFUL_DEGRADATION.md`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/docs/13_CONCEPT_DUAL_ENGINE_GENERATION_AND_GRACEFUL_DEGRADATION.md).
+  * Full concept reference: [`docs/13_CONCEPT_DUAL_ENGINE_GENERATION_AND_GRACEFUL_DEGRADATION.md`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/docs/13_CONCEPT_DUAL_ENGINE_GENERATION_AND_GRACEFUL_DEGRADATION.md).
 
 ---
 
-### 2. Defense-in-Depth Security Sandbox ([`validate_and_sanitize_sql`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/agents/sql_agent.py#L70-L104))
+### 2. Defense-in-Depth Security Sandbox ([`validate_and_sanitize_sql`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/sql_agent.py#L70-L104))
 * **Architectural Rationale:** 
   * **Markdown Stripping:** LLMs often wrap outputs in ` ```sql ... ``` ` code blocks. Stripping these prior to syntax evaluation prevents parsing errors.
   * **Semicolon Blockade:** Semicolons (`;`) are strictly forbidden to prevent stacked SQL injection (e.g., `SELECT * FROM products; DROP TABLE customers;`).
@@ -72,7 +72,7 @@ flowchart TD
 
 ---
 
-### 3. Kernel-Level Database Transaction Isolation ([`execute_safe_sql`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/agents/sql_agent.py#L164-L179))
+### 3. Kernel-Level Database Transaction Isolation ([`execute_safe_sql`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/sql_agent.py#L164-L179))
 ```python
 async with AsyncSessionLocal() as session:
     # Enforce PostgreSQL transaction read-only mode at connection level
@@ -85,7 +85,7 @@ async with AsyncSessionLocal() as session:
 
 ---
 
-### 4. Tabular Markdown Synthesizer with Explainability ([`format_sql_results_as_markdown`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/agents/sql_agent.py#L185-L218))
+### 4. Tabular Markdown Synthesizer with Explainability ([`format_sql_results_as_markdown`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/sql_agent.py#L185-L218))
 * **Architectural Rationale:** 
   * Rather than dumping raw JSON lists of dicts, the synthesizer transforms column keys and row values into standard GitHub-flavored Markdown tables with aligned headers and separators.
   * Crucially, it embeds the exact executed SQL query in a code block. This provides **explainability and auditability** for business users to verify *how* the metric was calculated.
@@ -124,7 +124,7 @@ flowchart TD
 ---
 
 ### Finding 1: Exception Overloading Masks System Failures as Security Attacks
-* **Location:** [`app/agents/sql_agent.py:L242-L249`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/agents/sql_agent.py#L242-L249)
+* **Location:** [`app/agents/sql_agent.py:L242-L249`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/sql_agent.py#L242-L249)
 * **The Incident (Reproduced Live):**
   When running `run_text_to_sql_pipeline` on a machine where the `greenlet` C-extension was missing, SQLAlchemy raised:
   ```text
@@ -149,7 +149,7 @@ flowchart TD
 ---
 
 ### Finding 2: Missing Query Execution Timeout (`statement_timeout`)
-* **Location:** [`app/agents/sql_agent.py:L170-L173`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/agents/sql_agent.py#L170-L173)
+* **Location:** [`app/agents/sql_agent.py:L170-L173`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/sql_agent.py#L170-L173)
 * **The Vulnerability:** 
   A query can be purely `SELECT` and read-only, yet still execute a Denial-of-Service (DoS) attack through a runaway cartesian product:
   ```sql
@@ -165,14 +165,14 @@ flowchart TD
 ---
 
 ### Finding 3: Missing `greenlet` in Project Dependencies
-* **Location:** [`requirements.txt`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/requirements.txt)
+* **Location:** [`requirements.txt`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/requirements.txt)
 * **The Issue:** SQLAlchemy 2.0 with `asyncpg` requires `greenlet` to run async sessions. While `asyncpg` was listed in `requirements.txt`, `greenlet>=3.0.0` was omitted.
 * **Architect's Fix:** Add `greenlet>=3.0.0` to `requirements.txt`.
 
 ---
 
 ### Finding 4: SQL Comment Obfuscation and Sleep Attacks
-* **Location:** [`app/agents/sql_agent.py:L64-L68`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/agents/sql_agent.py#L64-L68)
+* **Location:** [`app/agents/sql_agent.py:L64-L68`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/sql_agent.py#L64-L68)
 * **The Vulnerability:** 
   1. Adversaries use inline comments to bypass simple keyword splitters: `SELECT/*comment*/1`.
   2. Adversaries use time-delay functions to perform blind SQL injection or probe database responsiveness: `SELECT pg_sleep(10);`.
@@ -183,7 +183,7 @@ flowchart TD
 ---
 
 ### Finding 5: Live Database Coupling in Unit Test Suite
-* **Location:** [`tests/test_text_to_sql.py:L66-L74`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/tests/test_text_to_sql.py#L66-L74)
+* **Location:** [`tests/test_text_to_sql.py:L66-L74`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/tests/test_text_to_sql.py#L66-L74)
 * **The Issue:** `test_end_to_end_text_to_sql_pipeline` attempts a direct network connection to `localhost:5433`. If run on a CI runner without Docker or when a developer has not started the container, the entire test suite fails.
 * **Architect's Fix:** Check database availability or mock the session if PostgreSQL is unreachable. Furthermore, in `run_text_to_sql_pipeline`, return the generated `sql_query` instead of overwriting it with `"ERROR"` on DB failure, so the query remains inspectable.
 

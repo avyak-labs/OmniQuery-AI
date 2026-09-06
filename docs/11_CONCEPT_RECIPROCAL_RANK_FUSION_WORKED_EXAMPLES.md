@@ -122,7 +122,7 @@ Suppose a user queries:
 
 ## 5. Python Implementation in OmniQuery-AI
 
-From [`app/rag/hybrid_retriever.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/app/rag/hybrid_retriever.py#L14-L44):
+From [`app/rag/hybrid_retriever.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/rag/hybrid_retriever.py#L14-L44):
 
 ```python
 def reciprocal_rank_fusion(
@@ -148,4 +148,4 @@ def reciprocal_rank_fusion(
     return [doc_map[did] for did in sorted_ids]
 ```
 
-This logic is continuously validated by [`tests/test_hybrid_rag.py`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/tests/test_hybrid_rag.py#L27-L47).
+This logic is continuously validated by [`tests/test_hybrid_rag.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/tests/test_hybrid_rag.py#L27-L47).
