@@ -19,14 +19,14 @@ Traditional enterprise AI deployments struggle with two major limitations:
 
 ---
 
-## 2. Project Goals & Mentorship Context
+## 2. Technical Objectives & Production Readiness Goals
 
-### Target Outcomes:
-* **For Canishe (Junior GenAI / LLM Application Engineer — Bangalore Market):**
-  * Target Compensation: **₹10–16 LPA** at top Bangalore AI startups and product enterprises (Sarvam AI, Yellow.ai, Krutrim, Fractal, Quantiphi, Tiger Analytics, Bosch, Cisco).
-  * Proof-of-Work Package: A public GitHub repository with automated tests, architecture diagrams, quantitative RAGAS benchmarks, and a 1-click live web demo on Hugging Face Spaces.
-* **For Janar (Director of AI Architecture — Dallas Market):**
-  * Demonstrates hands-on design of high-throughput asynchronous microservices, vector database scaling, LangGraph state machines, and automated LLM evaluation harnesses.
+### Production Milestones:
+* **High-Reliability Hybrid RAG:** Eliminate alphanumeric search failures by pairing dense vector retrieval with PostgreSQL BM25 keyword search and Reciprocal Rank Fusion ($k=60$).
+* **Safe Autonomous SQL Execution:** Deterministic AST-based SQL validation, read-only transaction sandboxing, and graceful degradation heuristics.
+* **Agentic Graph Routing:** Discrete, typed LangGraph state routing between unstructured documents, relational databases, and conversational synthesis.
+* **Continuous Quality Benchmarking:** Automated RAGAS evaluation harness enforcing $\ge 90\%$ faithfulness and verifiable context precision.
+* **Cloud-Native Deployment:** Production multi-stage Docker containerization and Streamlit UI.
 
 ---
 
@@ -149,14 +149,14 @@ gantt
 * [ ] Build multi-stage `Dockerfile` and update `docker-compose.yml`.
 * [ ] Deploy 1-click live demo on Hugging Face Spaces.
 * [ ] Finalize GitHub README with architecture diagrams, API docs, and RAGAS benchmark scorecards.
-* [ ] Update Canishe's resume with high-impact, ATS-optimized bullet points.
+* [ ] Finalize production documentation, deployment guides, and benchmark reports.
 
 ---
 
-## 7. Recruiter Proof-of-Work Package
+## 7. Production Release Deliverables Package
 
-Upon completion of this project, Canishe will present:
-1. **Public GitHub Repository:** Clean modular code, async FastAPI design, LangGraph state machine, typed Python, and automated Pytest suites.
-2. **1-Click Live Hosted Demo:** Publicly accessible demo link on Hugging Face Spaces.
+Upon completion of this project, OmniQuery-AI provides:
+1. **Production Codebase:** Clean modular code, async FastAPI design, LangGraph state machine, typed Python, and automated Pytest suites.
+2. **Containerized Architecture:** Fully dockerized PostgreSQL 16 + pgvector and Streamlit UI.
 3. **RAGAS Benchmark Scorecard:** Measurable evidence of system reliability (> 90% Faithfulness).
-4. **Resume Bullet Points:** Tailored for Bangalore GenAI job listings highlighting Hybrid Search, RRF, and LangGraph orchestration.
+4. **Technical Documentation & Architectural Guides:** Comprehensive documentation covering Hybrid Search, RRF, LangGraph orchestration, and AST SQL sandboxing.

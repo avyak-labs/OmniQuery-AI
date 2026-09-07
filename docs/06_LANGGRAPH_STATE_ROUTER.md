@@ -105,6 +105,6 @@ agent_app = workflow.compile()
 
 ---
 
-## 4. Why LangGraph is Crucial for 2026 Bangalore Job Interviews
+## 4. Why LangGraph is Crucial for Production Agentic Systems
 
-Hiring managers look for candidates who understand **multi-agent architectures** rather than simple one-line prompt chains. Being able to explain state graphs, cyclic agent retries, and conditional edge routing is a key differentiator for ₹10–16 LPA GenAI roles.
+Enterprise engineering teams look for architectures that rely on **resilient multi-agent state graphs** rather than naive prompt chains. Being able to demonstrate typed state schemas, cyclic agent retries, and deterministic conditional edge routing is what sets production GenAI systems apart.

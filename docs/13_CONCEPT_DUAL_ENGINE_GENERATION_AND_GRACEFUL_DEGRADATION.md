@@ -1,8 +1,7 @@
 # 13. Concept: Dual-Engine Generation & Graceful Degradation in Enterprise GenAI
 
 **Module:** `13_CONCEPT_DUAL_ENGINE_GENERATION_AND_GRACEFUL_DEGRADATION.md`  
-**System Location:** [`app/agents/sql_agent.py:L125-L157`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/sql_agent.py#L125-L157)  
-**Target Roles:** Junior to Senior GenAI Application Engineer (Track C: ₹10–16 LPA)  
+**Focus Area:** High Availability & Fault-Tolerant Enterprise LLM Architecture  
 
 ---
 
@@ -64,7 +63,7 @@ flowchart TD
 
 ---
 
-## 🔬 Code Walkthrough ([`app/agents/sql_agent.py:L125-L157`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/sql_agent.py#L125-L157))
+## 🔬 Code Walkthrough ([`app/agents/sql_agent.py:L125-L157`](file:///Users/jnarayanassamy/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/sql_agent.py#L125-L157))
 
 Here is the exact implementation created during Week 2:
 
@@ -185,7 +184,7 @@ In OmniQuery-AI:
 ```python
 return validate_and_sanitize_sql(raw)
 ```
-**Both engines** are piped into [`validate_and_sanitize_sql()`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/sql_agent.py#L70-L104). This ensures:
+**Both engines** are piped into [`validate_and_sanitize_sql()`](file:///Users/jnarayanassamy/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/sql_agent.py#L70-L104). This ensures:
 1. Automatic appending of `LIMIT 50` if missing.
 2. Verification that no mutation keywords exist.
 3. Verification that queries strictly begin with `SELECT` or `WITH`.
@@ -193,23 +192,21 @@ return validate_and_sanitize_sql(raw)
 
 ---
 
-## 🎤 Bangalore GenAI Interview Playbook (Track C: ₹10–16 LPA Focus)
+## 🎤 Technical Deep-Dive: Addressing Cloud Outages in Production
 
-This is one of the highest-yield architectural topics in technical interviews at **Sarvam AI, Yellow.ai, Krutrim, Swiggy, Flipkart, and Cisco**.
+### The Common Production Failure Mode:
+> *"What happens if your cloud LLM provider experiences an outage, throws a 429 rate-limit error, or exhausts API budget?"*
 
-### The Recruiter / Tech Lead Question:
-> *"What happens if your LLM provider experiences an outage, throws a 429 rate-limit error, or your customer runs out of API budget?"*
-
-### ❌ The Junior Answer:
+### ❌ The Naive Architecture:
 > *"The API returns an error and we catch it in an except block and show 'Sorry, an error occurred, please try again later'."*
-*(Signals: Prototype developer, lack of high-availability mindset, poor SLA ownership).*
+*(Result: System outage, failed SLAs, broken user workflows).*
 
-### ✅ The Senior Architect Answer (Canishe's Target):
+### ✅ The Fault-Tolerant Architecture (OmniQuery-AI Pattern):
 > *"In enterprise production, 100% cloud LLM dependency is an anti-pattern. In OmniQuery-AI, we architected a **Dual-Engine Graceful Degradation pattern**:*
 > * *For open-ended complex queries, our primary engine uses Gemini 1.5 Flash grounded with relational DDL.*
 > * *If cloud APIs throttle with HTTP 429 or network timeouts occur, our secondary deterministic engine intercepts high-frequency analytical queries (inventory checks, revenue sums, order status counts) using semantic heuristic matching.*
 > * *Both engines feed into our unified AST/regex security sandbox and execute under `SET TRANSACTION READ ONLY;`.*
-> * *This ensures our core business KPIs and local test automation maintain 99.9% uptime, execute in under 1 millisecond, and incur zero API cost."*
+> * *This ensures core business KPIs and local test automation maintain 99.9% uptime, execute in under 1 millisecond, and incur zero API cost."*
 
 ---
 
@@ -218,5 +215,5 @@ This is one of the highest-yield architectural topics in technical interviews at
 1. **Log Every Fallback Event:** Always log `[SQL AGENT] Fallback triggered` to observability tools (Datadog, Prometheus, LangSmith) to track cloud LLM error rates.
 2. **Mine Query Logs to Expand Heuristics:** Analyze user query logs weekly. Add the top 10 most common business questions to the deterministic engine to save API costs.
 3. **Never Bypass the Sandbox:** Always run both LLM-generated and rule-generated queries through the same security validator.
-4. **Avoid the Silent Degradation Trap:** Never downgrade silently without informing the user. See **[14_CONCEPT_HUMAN_AI_TRUST_AND_SILENT_DEGRADATION.md](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/docs/14_CONCEPT_HUMAN_AI_TRUST_AND_SILENT_DEGRADATION.md)** for provenance badging, multi-LLM cascading, and semantic caching strategies.
+4. **Avoid the Silent Degradation Trap:** Never downgrade silently without informing the user. See **[14_CONCEPT_HUMAN_AI_TRUST_AND_SILENT_DEGRADATION.md](file:///Users/jnarayanassamy/personal/kids/canishe_rahul/OmniQuery-AI/docs/14_CONCEPT_HUMAN_AI_TRUST_AND_SILENT_DEGRADATION.md)** for provenance badging, multi-LLM cascading, and semantic caching strategies.
 

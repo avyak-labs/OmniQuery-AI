@@ -1,8 +1,7 @@
 # 14. Concept: Human-AI Trust, Silent Degradation & Graceful Fallback Strategies
 
 **Module:** `14_CONCEPT_HUMAN_AI_TRUST_AND_SILENT_DEGRADATION.md`  
-**System Location:** [`app/agents/sql_agent.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/sql_agent.py) & [`app/agents/router.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/agents/router.py)  
-**Target Roles:** Senior GenAI Engineer, LLM Product Architect (Track C: ₹10–16 LPA)  
+**Focus Area:** Human-AI Interaction (HCI), Trust Engineering & Resilient Fallbacks  
 
 ---
 
@@ -171,17 +170,15 @@ This transforms a potential system failure into a helpful, interactive guidance 
 
 ---
 
-## 🎤 Bangalore GenAI Interview Playbook: The Senior Architect Answer
+## 🎤 Architectural Deep-Dive: Preserving User Trust During Degradation
 
-When interviewing for **Senior GenAI Engineer (Track C: ₹10–16 LPA)** in Bangalore, expect this exact question:
+### The Critical Architectural Question:
+> *"What if your deterministic fallback gives a generic or irrelevant answer when primary LLMs are throttled? Won't that ruin user trust in your platform?"*
 
-### Interviewer:
-> *"What if your deterministic fallback gives a bad or irrelevant answer when Gemini is throttled? Won't that ruin user trust in your product?"*
-
-### Candidate Target Answer (Canishe):
-> *"That is the classic **Silent Degradation Trap**. If an AI product silently returns a generic table when the user asked a nuanced question, the user assumes the AI is hallucinating or dumb. In OmniQuery-AI, we solve this through four architectural controls:*
+### The Resilient System Rationale:
+> *"That is the classic **Silent Degradation Trap**. If an AI product silently returns a generic table when the user asked a nuanced question, the user assumes the AI is hallucinating or malfunctioning. In OmniQuery-AI, we solve this through four architectural controls:*
 > 
 > *1. **Provenance Badging:** We never degrade silently. Fallback queries are labeled with an Amber 'High-Demand Mode' badge, explaining that cloud AI is throttled and providing a one-click retry button.*
 > *2. **Confidence Thresholding & Honest Refusal:** If an ungrounded query has low heuristic match confidence, we refuse honestly rather than returning a random product table. We present verified canned reports instead.*
-> *3. **Multi-Model Cascading:** Before falling back to heuristics, our circuit breaker fails over to Groq Llama 3.1 or local Ollama instances, ensuring users still receive natural language reasoning even during Google outages.*
+> *3. **Multi-Model Cascading:** Before falling back to heuristics, our circuit breaker fails over to Groq Llama 3.1 or local Ollama instances, ensuring users still receive natural language reasoning even during cloud provider outages.*
 > *4. **Semantic Caching:** We cache high-frequency query embeddings in pgvector, slashing token consumption by 60% so rate limits are rarely triggered in the first place."*

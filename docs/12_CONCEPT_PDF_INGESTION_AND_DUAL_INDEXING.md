@@ -36,7 +36,7 @@ flowchart TD
 
 ## 2. Step 1: Page-by-Page Extraction & Metadata Preservation
 
-In [`app/rag/ingest.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/rag/ingest.py#L35-L60), we extract text per page and attach page metadata:
+In [`app/rag/ingest.py`](file:///Users/jnarayanassamy/personal/kids/canishe_rahul/OmniQuery-AI/app/rag/ingest.py#L35-L60), we extract text per page and attach page metadata:
 
 ```python
 from pypdf import PdfReader
@@ -75,7 +75,7 @@ Why do we use `chunk_size=500` and `chunk_overlap=50`?
 
 ## 4. Step 3: Dual Storage in PostgreSQL (`pgvector` + `tsvector`)
 
-In [`app/models.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/models.py#L22-L55), every chunk is stored with both representations:
+In [`app/models.py`](file:///Users/jnarayanassamy/personal/kids/canishe_rahul/OmniQuery-AI/app/models.py#L22-L55), every chunk is stored with both representations:
 
 ```sql
 CREATE TABLE document_chunks (
@@ -101,7 +101,7 @@ CREATE INDEX ix_document_chunks_tsv ON document_chunks USING gin(tsv_content);
 ```
 
 ### Automatic TSVECTOR Generation during Ingestion:
-When inserting chunks in [`app/rag/ingest.py`](file:///Users/janar/personal/kids/canishe_rahul/OmniQuery-AI/app/rag/ingest.py#L114-L149), PostgreSQL automatically generates the stemmed keywords:
+When inserting chunks in [`app/rag/ingest.py`](file:///Users/jnarayanassamy/personal/kids/canishe_rahul/OmniQuery-AI/app/rag/ingest.py#L114-L149), PostgreSQL automatically generates the stemmed keywords:
 
 ```sql
 INSERT INTO document_chunks (

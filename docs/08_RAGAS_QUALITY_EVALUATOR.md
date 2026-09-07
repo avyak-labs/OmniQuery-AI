@@ -89,12 +89,12 @@ print(f"📊 RAGAS Context Precision:   {results['context_precision']:.4f}")
 
 ---
 
-## 4. Why This Wins Bangalore GenAI Job Interviews
+## 4. Why Automated Evaluation is Essential for Enterprise GenAI
 
-In 2026, 95% of candidates applying for GenAI roles only show a basic Streamlit app with an OpenAI API key.
-When Canishe shows hiring managers at Sarvam AI, Bosch, or Fractal:
-1. An automated **RAGAS test harness** integrated into the repository.
+In production environments, deploying LLMs without regression testing leads to catastrophic hallucinations and loss of customer trust.
+By integrating:
+1. An automated **RAGAS test harness** integrated into the continuous testing pipeline.
 2. A quantitative benchmark proving **94.2% Faithfulness and 0% Hallucinations**.
-3. Clear documentation explaining how hybrid retrieval improved Context Precision by 38% over naive vector search.
+3. Empirical evidence demonstrating how hybrid retrieval improved Context Precision by 38% over naive vector search.
 
-He immediately separates himself from thousands of generic applicants and qualifies directly for senior review.
+OmniQuery-AI ensures that system prompts, retriever parameters, and model upgrades can be modified with quantitative confidence.
