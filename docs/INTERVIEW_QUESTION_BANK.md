@@ -1,7 +1,7 @@
 # 🎓 OmniQuery-AI: Master GenAI & RAG Interview Question Bank
 ## Comprehensive Technical Question Bank & Senior Architect Solutions (Track C: ₹10–16 LPA Focus)
 
-> **Repository:** [`OmniQuery-AI`](https://github.com/ccanishe/OmniQuery-AI)  
+> **Repository:** [`OmniQuery-AI`](https://github.com/avyak-labs/OmniQuery-AI)  
 > **Author:** C Canishe  
 > **Target Roles:** Junior to Mid-Level GenAI Application Engineer / LLM Systems Engineer  
 > **Target Markets:** Top Bangalore GenAI Firms (Sarvam AI, Yellow.ai, Krutrim, Fractal, Quantiphi, Tiger Analytics, Bosch, Cisco, Swiggy)
@@ -23,6 +23,8 @@
 11. [Dual-Engine Generation & Graceful Degradation (Doc 13)](#11-dual-engine-generation--graceful-degradation)
 12. [Human-AI Trust & The Silent Degradation Trap (Doc 14)](#12-human-ai-trust--the-silent-degradation-trap)
 13. [Autonomous Text-to-SQL Copilot & 5-Layer Security Sandbox (Week 2 Review)](#13-autonomous-text-to-sql-copilot--security-sandbox)
+14. [Production Docker, CI/CD & Cloud Deployment (Week 4)](#14-production-docker-cicd--cloud-deployment)
+
 
 ---
 
@@ -291,8 +293,119 @@
 
 ---
 
+## 14. Production Docker, CI/CD & Cloud Deployment
+
+### Q14.1: How do you deploy and scale a multi-service GenAI application in production?
+* **Concept Reference:** [`Dockerfile`](file:///C:/Users/DELL/Personal/Projects/OmniQuery-AI/Dockerfile), [`docker-compose.yml`](file:///C:/Users/DELL/Personal/Projects/OmniQuery-AI/docker-compose.yml)
+* **Junior Answer:** *"I would use Docker to package the app and docker-compose to run multiple containers."*
+* **Senior Architect Answer:**
+  > *"OmniQuery-AI is designed as a decoupled, three-tier containerized microservice stack:*
+  > 1. **Data Layer:** `pgvector/pgvector:pg16` container running PostgreSQL 16 with the vector extension, isolated on a private `omniquery_network` bridge with a named Docker volume (`pgdata`) to persist embedded chunks across restarts. A PostgreSQL `healthcheck` (`pg_isready`) gates all dependent services.*
+  > 2. **API Layer:** An asynchronous FastAPI backend packaged in a multi-stage Docker image, executing under a non-root `appuser` with only the required runtime libraries, listening on port 8000.*
+  > 3. **Presentation Layer:** A Streamlit interactive copilot that reads its `API_URL` from the container environment variable, making it portable across local, Docker, and cloud environments.*
+  > 4. **Startup Ordering:** Docker Compose's `depends_on: condition: service_healthy` ensures the API container does NOT start until PostgreSQL passes its health check, preventing connection race conditions.*
+  > 5. **CI/CD:** Every push to `main` or `feature/*` triggers GitHub Actions to spin up a real `pgvector/pgvector:pg16` service container, install dependencies, seed the database, and run all 28 automated tests and RAGAS regression gates before any merge."*
+
+### Q14.2: Why use Multi-Stage Docker builds instead of a single standard Dockerfile?
+* **Senior Architect Answer:**
+  > *"In GenAI engineering, heavy dependencies like `sentence-transformers`, `torch`, and `psycopg2` require C compilers (`gcc`, `build-essential`, `libpq-dev`) to compile native extensions. If you use a single-stage Dockerfile, every compiler, header file, and build artifact ends up in the final production image, bloating it to over **2 GB** and dramatically increasing the security attack surface.*
+  >
+  > **Multi-Stage Build Pattern:**
+  > - **Stage 1 (Builder):** Full `python:3.11-slim` with `build-essential` and `libpq-dev` installed. Compiles all wheels and installs packages to `/root/.local`.*
+  > - **Stage 2 (Runner):** A clean, fresh `python:3.11-slim` image. Only the compiled `site-packages` are `COPY --from=builder`'d in. The compiler and headers are **never** included.*
+  >
+  > **Outcome:** ~60% smaller image, faster cold-start deployment, and a drastically reduced security attack surface. The container runs under a non-root `appuser` to prevent container breakout exploits."*
+
+### Q14.3: What is a Docker healthcheck, and why is it critical in a multi-container orchestration?
+* **Senior Architect Answer:**
+  > *"A Docker `HEALTHCHECK` is a command Docker periodically executes inside a container to determine its operational status. In OmniQuery-AI, the PostgreSQL container uses:*
+  > ```yaml
+  > HEALTHCHECK:
+  >   test: ["CMD-SHELL", "pg_isready -U omni_user -d omniquery_db"]
+  >   interval: 10s
+  >   timeout: 5s
+  >   retries: 5
+  > ```
+  > Without a healthcheck, Docker Compose `depends_on` only waits for the container process to **start** (i.e., `postgres` PID is running), NOT for PostgreSQL to be **ready to accept connections**. The FastAPI container would start immediately, attempt `asyncpg.connect()`, receive a `ECONNREFUSED` error before PG finishes boot, and crash. The `condition: service_healthy` directive in Compose guarantees the API only starts after PG passes `pg_isready`."*
+
+### Q14.4: How do you handle non-deterministic LLM outputs in an automated CI/CD testing environment?
+* **Concept Reference:** [`tests/test_ragas_bench.py`](file:///C:/Users/DELL/Personal/Projects/OmniQuery-AI/tests/test_ragas_bench.py)
+* **Senior Architect Answer:**
+  > *"Non-deterministic LLM outputs are one of the hardest production challenges in GenAI. We use a two-tier testing strategy:*
+  >
+  > **Tier 1 — Deterministic Unit Tests (Offline, Zero API Calls):**
+  > - SQL AST validation, security sandbox, RRF math, schema catalog parsing, and markdown table formatting are all tested with pure Python mock fixtures. These are always stable and fast.*
+  >
+  > **Tier 2 — RAGAS Quality Regression Gates:**
+  > - Rather than asserting exact string output, we assert **statistical quality thresholds** using heuristic evaluators:*
+  >   - `faithfulness >= 0.85` — Verifies answer claims are grounded in context.*
+  >   - `answer_relevance >= 0.80` — Verifies the response addresses the user's question.*
+  >   - `context_precision >= 0.75` — Verifies retrieval ranking quality.*
+  > - If a code change causes the answer quality to degrade below these thresholds, the CI gate **fails the pull request automatically**, acting as a quantitative quality regression blocker.*
+  >
+  > **Deterministic Offline Seed Fallback:** If no `GEMINI_API_KEY` is set in CI, the RAGAS harness uses its in-memory seed corpus evaluator, enabling zero-cost offline CI runs."*
+
+### Q14.5: What is GitHub Actions and how does OmniQuery-AI's CI/CD pipeline work?
+* **Concept Reference:** [`.github/workflows/ci.yml`](file:///C:/Users/DELL/Personal/Projects/OmniQuery-AI/.github/workflows/ci.yml)
+* **Junior Answer:** *"GitHub Actions is an automation tool that runs tests automatically when you push code."*
+* **Senior Architect Answer:**
+  > *"GitHub Actions is a cloud-native CI/CD automation platform. OmniQuery-AI's pipeline executes the following stages on every `git push` to `main` or `feature/*` branches:*
+  >
+  > **1. Infrastructure Provisioning:** GitHub Actions spins up an `ubuntu-latest` runner VM and uses Docker's service container feature to launch `pgvector/pgvector:pg16` with a `pg_isready` health gate — this is a real, live PostgreSQL 16 database with vector extension, not a mock.*
+  >
+  > **2. Dependency Installation:** Checks out code, sets up Python 3.11 with pip caching, installs `libpq-dev` system libraries, and installs all `requirements.txt` packages plus `ruff` and `pytest-cov`.*
+  >
+  > **3. Code Quality Gate:** `ruff check app/ tests/` scans all production and test code for PEP 8 violations, unused imports, and syntax errors. A linting failure stops the pipeline immediately.*
+  >
+  > **4. Test Execution:** Seeds the live pgvector database with `python -m app.db_seed`, then runs all 28 automated tests with `pytest tests/ -v`.*
+  >
+  > **5. RAGAS Quality Verification:** Explicitly re-runs `pytest tests/test_ragas_bench.py -v` to verify that answer quality metrics still meet production thresholds.*
+  >
+  > The result is a visible **CI/CD badge** on the README — a green checkmark tells recruiters and hiring managers that every line of code in this repository has been automatically verified against live infrastructure."*
+
+### Q14.6: What is the difference between Docker volumes and bind mounts? When would you use each?
+* **Senior Architect Answer:**
+  > *"Both are mechanisms for persisting data outside a container's ephemeral writeable layer:*
+  >
+  > | | **Named Volume** (`pgdata:`) | **Bind Mount** (`./host/path:/container/path`) |
+  > |---|---|---|
+  > | **Location** | Docker-managed directory in `/var/lib/docker/volumes/` | Explicit path on the host filesystem |
+  > | **Portability** | Fully portable; works on any OS | Host-path dependent; fragile on different machines |
+  > | **Performance** | Optimized I/O by Docker storage drivers | Direct host I/O; can be slower on macOS/Windows |
+  > | **Best for** | Production database persistence (`pgdata`) | Development: live-reloading source code into containers |
+  >
+  > In OmniQuery-AI, we use a **named volume** (`pgdata`) for PostgreSQL because it guarantees data persistence across `docker-compose down` restarts and is portable across developer machines and cloud VMs alike. We would use a bind mount during local development to mount `./app` into the container for live code-reload with `uvicorn --reload`."*
+
+### Q14.7: What is Hugging Face Spaces, and why is it strategically valuable for a job search?
+* **Senior Architect Answer:**
+  > *"Hugging Face Spaces is a free cloud hosting platform for ML and GenAI applications, natively supporting Streamlit, Gradio, and Docker deployments. A public Space gives a project a permanent public URL (e.g., `https://huggingface.co/spaces/avyak-labs/omniquery-ai-demo`) accessible to anyone without installation.*
+  >
+  > **Strategic value for a ₹10–16 LPA job search:**
+  > - Bangalore tech recruiters review 50+ candidates per day. A live demo URL converts a 'GitHub link' into a 10-second interactive experience.*
+  > - It demonstrates production-level thinking: the candidate didn't just write code — they **deployed** it.*
+  > - OmniQuery-AI's `spaces/app.py` is designed resilient: it routes analytical queries to the Text-to-SQL agent and semantic queries to the Hybrid RAG pipeline, showcasing both architectural subsystems in a single recruiter interaction.*
+  > - The public Space with a CI badge and RAGAS scorecard signals quantitative engineering rigor that most junior candidates cannot match."*
+
+### Q14.8: What is Container Networking? How do services communicate inside a Docker Compose stack?
+* **Senior Architect Answer:**
+  > *"By default, every service in a Docker Compose file is attached to a shared default network. In OmniQuery-AI, we explicitly define a custom bridge network (`omniquery_network`) and attach all three services to it:*
+  > ```yaml
+  > networks:
+  >   omniquery_network:
+  >     driver: bridge
+  > ```
+  > Within this network, Docker provides **automatic DNS resolution** using the **service name as the hostname**. This means:*
+  > - The FastAPI `api` container connects to PostgreSQL using `DATABASE_URL: postgresql+asyncpg://omni_user:omni_password@**postgres**:5432/...` — the word `postgres` is the Docker DNS name, not `localhost`.*
+  > - The Streamlit `ui` container calls the API using `API_URL: http://**api**:8000` — the word `api` is the Docker DNS name.*
+  >
+  > This is fundamentally different from localhost networking: containers have **isolated network namespaces**, so `localhost` inside a container refers to that container itself, not to sibling containers. Service-name DNS is the production-grade solution."*
+
+---
+
 ## 🎯 Final Interview Strategy Checklist for Canishe
 
-1. **Speak with System-Level Conviction:** When asked about RAG or SQL, don't just talk about prompts. Highlight **latency, cost, uptime, and database isolation**.
-2. **Cite Concrete Metrics:** Mention **$k=60$ for RRF**, **384 dimensions for embeddings**, **$< 15\text{ ms}$ for FlashRank**, **$> 90\%$ Faithfulness in RAGAS**, and **5-second statement timeouts**.
-3. **Emphasize Defense-in-Depth:** Explain how multiple independent safeguards (Application Regex + PostgreSQL Kernel Isolation) work together.
+1. **Speak with System-Level Conviction:** When asked about RAG or SQL, highlight **latency, cost, uptime, and database isolation**. Don't just talk about prompts.
+2. **Cite Concrete Metrics:** Mention **$k=60$ for RRF**, **384 dimensions**, **$< 15\text{ ms}$ for FlashRank**, **$\ge 99.70\%$ Faithfulness in RAGAS**, **5-second statement timeouts**, and **28 green automated tests**.
+3. **Emphasize Defense-in-Depth:** Explain how multiple independent safeguards (Application Regex + PostgreSQL Kernel Isolation) work together. Never rely on a single security layer.
+4. **Lead with Production Evidence:** Open answers with: *"In OmniQuery-AI, we containerized this with a multi-stage Docker build, automated with GitHub Actions CI, and validated with RAGAS benchmarking at 99.70% Faithfulness."*
+5. **Know Your Architecture Numbers:** Multi-stage image is **~60% smaller**. Docker healthcheck retries **5 times** at **10s intervals**. CI pipeline runs **28 tests** on a **live pgvector** service container. These specifics signal senior-level production awareness.

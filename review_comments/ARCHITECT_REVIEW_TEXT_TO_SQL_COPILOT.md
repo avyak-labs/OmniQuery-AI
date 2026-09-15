@@ -2,7 +2,7 @@
 
 **Repository:** `OmniQuery-AI`  
 **Branch Under Review:** [`feature/text-to-sql-copilot`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/)  
-**Commit:** [`e3afdb4`](https://github.com/ccanishe/OmniQuery-AI/commit/e3afdb45e9f56fd8fbd350c8041ac8dfe8610709) (`feat(sql): implement autonomous Text-to-SQL copilot engine with read-only sandbox and table formatting`)  
+**Commit:** [`e3afdb4`](https://github.com/avyak-labs/OmniQuery-AI/commit/e3afdb45e9f56fd8fbd350c8041ac8dfe8610709) (`feat(sql): implement autonomous Text-to-SQL copilot engine with read-only sandbox and table formatting`)  
 **Author:** Canishe (`ccanishe@gmail.com`)  
 **Reviewer:** Senior AGI & GenAI Systems Architect  
 **Review Date:** September 2, 2026  

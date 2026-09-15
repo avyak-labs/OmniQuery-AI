@@ -261,3 +261,18 @@ async def run_text_to_sql_pipeline(user_query: str) -> Tuple[str, str, str]:
         err_msg = f"⚠️ **SQL Execution Error:** An issue occurred while running the query against PostgreSQL: `{str(e)}`"
         return sql_query, err_msg, "0 rows"
 
+
+async def execute_text_to_sql(user_query: str) -> Dict[str, Any]:
+    """
+    Structured execution wrapper for Text-to-SQL copilot:
+    Returns a dictionary with 'sql_query', 'markdown_table', and 'summary' keys.
+    Useful for UI integration and cloud runners (e.g. Hugging Face Spaces).
+    """
+    sql_query, markdown_response, summary = await run_text_to_sql_pipeline(user_query)
+    return {
+        "sql_query": sql_query,
+        "markdown_table": markdown_response,
+        "summary": summary
+    }
+
+

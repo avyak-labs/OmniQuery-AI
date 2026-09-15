@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   postgres:
     image: pgvector/pgvector:pg16
@@ -11,6 +13,52 @@ services:
       - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U omni_user -d omniquery_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - omniquery_network
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: omniquery_api
+    restart: always
+    environment:
+      DATABASE_URL: postgresql+asyncpg://omni_user:omni_password@postgres:5432/omniquery_db
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      PORT: 8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    networks:
+      - omniquery_network
+
+  ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: omniquery_ui
+    restart: always
+    environment:
+      API_URL: http://api:8000
+    ports:
+      - "8501:8501"
+    depends_on:
+      - api
+    command: ["streamlit", "run", "ui/streamlit_app.py", "--server.port", "8501", "--server.address", "0.0.0.0"]
+    networks:
+      - omniquery_network
 
 volumes:
   pgdata:
+
+networks:
+  omniquery_network:
+    driver: bridge

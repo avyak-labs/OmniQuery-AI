@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import httpx
 import time
@@ -14,7 +15,8 @@ st.caption("Hybrid RAG (pgvector + BM25) + LangGraph Agent + Text-to-SQL")
 # Sidebar
 with st.sidebar:
     st.header("⚙️ Configuration")
-    api_url = st.text_input("FastAPI Backend URL", value="http://localhost:8000")
+    default_api_url = os.getenv("API_URL", "http://localhost:8000")
+    api_url = st.text_input("FastAPI Backend URL", value=default_api_url)
     st.divider()
     st.markdown("### 📊 Active Engine Capabilities")
     st.success("✅ Hybrid Search (Dense + Sparse BM25)")

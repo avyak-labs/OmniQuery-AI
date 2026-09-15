@@ -2,7 +2,7 @@
 
 **Repository:** `OmniQuery-AI`  
 **Branch Under Review:** [`feature/negative-and-edge-testing`](file:///Users/jnarayanassamy/personal/ai/canishe/OmniQuery-AI/)  
-**Commit:** [`dec76a3`](https://github.com/ccanishe/OmniQuery-AI/commit/dec76a38135397894c074761ec0d4e32dca38c69) (`feat(eval): add comprehensive negative scenario test suite and harden error boundaries`)  
+**Commit:** [`dec76a3`](https://github.com/avyak-labs/OmniQuery-AI/commit/dec76a38135397894c074761ec0d4e32dca38c69) (`feat(eval): add comprehensive negative scenario test suite and harden error boundaries`)  
 **Author:** Canishe (`ccanishe@gmail.com`)  
 **Reviewer:** Senior GenAI & Enterprise AI Architect  
 **Review Date:** September 2, 2026  
