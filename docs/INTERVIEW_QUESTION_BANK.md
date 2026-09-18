@@ -400,6 +400,38 @@
   >
   > This is fundamentally different from localhost networking: containers have **isolated network namespaces**, so `localhost` inside a container refers to that container itself, not to sibling containers. Service-name DNS is the production-grade solution."*
 
+### Q14.9: What is a GitHub Actions Workflow, and why do enterprise GenAI pipelines enforce static code analysis (Ruff) before running integration tests?
+* **Concept Reference:** [`.github/workflows/ci.yml`](file:///C:/Users/DELL/Personal/Projects/OmniQuery-AI/.github/workflows/ci.yml) & [`pyproject.toml`](file:///C:/Users/DELL/Personal/Projects/OmniQuery-AI/pyproject.toml)
+* **Junior Answer:** *"GitHub Actions is an automation tool that runs tests in the cloud whenever you push code, and linters check syntax."*
+* **Senior Architect Answer:**
+  > *"A GitHub Actions workflow is an event-driven CI/CD orchestration engine. Whenever an engineer pushes a branch or opens a Pull Request, GitHub boots an isolated cloud VM (e.g., `ubuntu-latest`), installs dependencies, and enforces sequential quality gates.
+  >
+  > In OmniQuery-AI, we place **static code analysis (Ruff)** at the very front of the pipeline before database provisioning or pytest execution. This 'fail-fast' architecture serves three critical enterprise purposes:
+  > 1. **Zero-Execution Defect Detection:** Linters parse code into Abstract Syntax Trees (AST) without executing it. They immediately catch dead code, unused unpacked variables (`RUF059`), unhandled exceptions, and invalid imports in milliseconds, avoiding expensive container spin-ups for broken code.
+  > 2. **Preventing Latent Bugs in Async/AI Pipelines:** In complex pipelines with async database sessions and LLM calls, an unused unpacked variable (e.g., `sql, response, summary = await run_text_to_sql_pipeline(query)`) often reveals an omitted regression assertion or discarded telemetry payload.
+  > 3. **Standardized Team Hygiene via `pyproject.toml`:** Rather than relying on individual developer IDE settings, the repository defines an explicit `pyproject.toml` specifying Python 3.11 target rules (`E`, `F`, `W`, `I`, `UP`, `RUF`), reasonable length limits, and test-specific rule allowances (`tests/* = ["S101", "RUF059"]`), preventing merge conflicts and formatting drift across distributed engineering teams."*
+
+### Q14.10: In fast-evolving GenAI ecosystems (e.g., LangChain 0.2+ splitting text splitters), how do you design resilient dependency management and prevent CI crashes?
+* **Concept Reference:** [`requirements.txt`](file:///C:/Users/DELL/Personal/Projects/OmniQuery-AI/requirements.txt) & [`app/rag/ingest.py`](file:///C:/Users/DELL/Personal/Projects/OmniQuery-AI/app/rag/ingest.py)
+* **Junior Answer:** *"We just run `pip install` and import whatever package we need."*
+* **Senior Architect Answer:**
+  > *"GenAI libraries evolve aggressively. A classic production hazard occurred when LangChain migrated `RecursiveCharacterTextSplitter` from `langchain.text_splitter` into a separate standalone package `langchain-text-splitters` in version 0.2+. If a CI runner installs `langchain>=0.2.0` without explicitly declaring `langchain-text-splitters`, legacy fallback imports throw `ModuleNotFoundError`, crashing the entire test suite during pytest module collection before a single assertion runs.
+  >
+  > In OmniQuery-AI, we solve this with a two-tier **Defensive Dependency Architecture**:
+  > 1. **Explicit Multi-Package Pinning in `requirements.txt`:** We explicitly declare `langchain-text-splitters>=0.2.0` alongside `langchain>=0.2.0`, `langchain-community`, and `langchain-core`, ensuring that package managers in Docker builds and CI runners install all modularized sub-packages deterministically.
+  > 2. **Graceful Degradation via Defensive Fallbacks in Code:** In `app/rag/ingest.py`, we implement a tiered import strategy:
+  >    ```python
+  >    try:
+  >        from langchain_text_splitters import RecursiveCharacterTextSplitter
+  >    except ImportError:
+  >        try:
+  >            from langchain.text_splitter import RecursiveCharacterTextSplitter
+  >        except ImportError:
+  >            # Pure-Python sliding window chunker fallback
+  >            class RecursiveCharacterTextSplitter: ...
+  >    ```
+  >    This guarantees that even in ultra-lightweight offline environments, test runners, or edge lambdas where third-party libraries might be absent or partially installed, the ingestion module and its unit tests remain 100% executable without crashing."*
+
 ---
 
 ## 🎯 Final Interview Strategy Checklist for Canishe
