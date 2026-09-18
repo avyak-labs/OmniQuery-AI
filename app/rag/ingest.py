@@ -18,7 +18,32 @@ from pypdf import PdfReader
 try:
     from langchain_text_splitters import RecursiveCharacterTextSplitter
 except ImportError:
-    from langchain.text_splitter import RecursiveCharacterTextSplitter
+    try:
+        from langchain.text_splitter import RecursiveCharacterTextSplitter
+    except ImportError:
+        # Fallback character chunker to guarantee zero import failures in lightweight/offline runs
+        class RecursiveCharacterTextSplitter:  # type: ignore[no-redef]
+            def __init__(
+                self,
+                chunk_size: int = 500,
+                chunk_overlap: int = 50,
+                separators: list[str] | None = None,
+            ):
+                self.chunk_size = chunk_size
+                self.chunk_overlap = chunk_overlap
+
+            def split_text(self, text: str) -> list[str]:
+                if not text:
+                    return []
+                chunks = []
+                start = 0
+                while start < len(text):
+                    end = start + self.chunk_size
+                    chunks.append(text[start:end])
+                    start += max(1, self.chunk_size - self.chunk_overlap)
+                    if start >= len(text):
+                        break
+                return chunks
 from sentence_transformers import SentenceTransformer
 from sqlalchemy import text
 
