@@ -7,24 +7,26 @@ Combines:
 4. FlashRank Cross-Encoder Re-ranking
 """
 
-from typing import List, Dict, Any, Optional
+from typing import Any
+
 from sqlalchemy import text
+
 from app.database import AsyncSessionLocal
 from app.rag.ingest import get_embedding_model
 from app.rag.reranker import rerank_passages
 
 
 def reciprocal_rank_fusion(
-    dense_results: List[Dict[str, Any]], 
-    sparse_results: List[Dict[str, Any]], 
-    k: int = 60
-) -> List[Dict[str, Any]]:
+    dense_results: list[dict[str, Any]],
+    sparse_results: list[dict[str, Any]],
+    k: int = 60,
+) -> list[dict[str, Any]]:
     """
     Blends dense and sparse search rankings using Reciprocal Rank Fusion (RRF).
     Score = sum(1 / (k + rank))
     """
-    scores: Dict[int, float] = {}
-    doc_map: Dict[int, Dict[str, Any]] = {}
+    scores: dict[int, float] = {}
+    doc_map: dict[int, dict[str, Any]] = {}
 
     # Rank dense results
     for rank, doc in enumerate(dense_results):
@@ -50,10 +52,8 @@ def reciprocal_rank_fusion(
 
 
 async def hybrid_search_raw(
-    query_text: str, 
-    query_embedding: List[float], 
-    candidate_fetch_limit: int = 10
-) -> List[Dict[str, Any]]:
+    query_text: str, query_embedding: list[float], candidate_fetch_limit: int = 10
+) -> list[dict[str, Any]]:
     """
     Executes dense cosine similarity search and PostgreSQL BM25 FTS in parallel,
     then combines them via RRF.
@@ -67,7 +67,7 @@ async def hybrid_search_raw(
             ORDER BY embedding <=> CAST(:vector AS vector)
             LIMIT :fetch_limit;
         """)
-        
+
         # 2. Sparse BM25 / Full-Text Search (PostgreSQL tsvector)
         sparse_query = text("""
             SELECT id, document_id, document_name, chunk_index, content, metadata_json,
@@ -77,25 +77,24 @@ async def hybrid_search_raw(
             ORDER BY bm25_score DESC
             LIMIT :fetch_limit;
         """)
-        
+
         dense_res = await session.execute(
-            dense_query, 
-            {"vector": str(query_embedding), "fetch_limit": candidate_fetch_limit}
+            dense_query,
+            {"vector": str(query_embedding), "fetch_limit": candidate_fetch_limit},
         )
         sparse_res = await session.execute(
-            sparse_query, 
-            {"query": query_text, "fetch_limit": candidate_fetch_limit}
+            sparse_query, {"query": query_text, "fetch_limit": candidate_fetch_limit}
         )
-        
+
         dense_docs = [dict(row._mapping) for row in dense_res]
         sparse_docs = [dict(row._mapping) for row in sparse_res]
-        
+
         # Blend candidates via Reciprocal Rank Fusion
         fused_docs = reciprocal_rank_fusion(dense_docs, sparse_docs)
         return fused_docs
 
 
-async def retrieve_context(query: str, top_k: int = 3) -> List[Dict[str, Any]]:
+async def retrieve_context(query: str, top_k: int = 3) -> list[dict[str, Any]]:
     """
     End-to-End Retrieval Pipeline:
     1. Validates query input.
@@ -115,9 +114,9 @@ async def retrieve_context(query: str, top_k: int = 3) -> List[Dict[str, Any]]:
     # 2. Hybrid search with oversampling (fetch 2x candidates)
     candidate_limit = max(top_k * 3, 10)
     fused_candidates = await hybrid_search_raw(
-        query_text=clean_query, 
-        query_embedding=query_vector, 
-        candidate_fetch_limit=candidate_limit
+        query_text=clean_query,
+        query_embedding=query_vector,
+        candidate_fetch_limit=candidate_limit,
     )
 
     # 3. FlashRank Cross-Encoder Re-ranking

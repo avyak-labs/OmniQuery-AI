@@ -10,9 +10,11 @@ Features:
 
 import os
 import re
-from typing import Dict, Any, List, Tuple, Optional
-from sqlalchemy import text
+from typing import Any
+
 from dotenv import load_dotenv
+from sqlalchemy import text
+
 from app.database import AsyncSessionLocal
 
 load_dotenv()
@@ -61,17 +63,29 @@ Table: order_items
 # 2. Security & SQL Sanitization Sandbox
 # =====================================================================
 
+
 class SQLSecurityViolation(ValueError):
     """Raised strictly when a query violates security or read-only sandbox rules."""
+
     pass
 
 
 FORBIDDEN_SQL_KEYWORDS = [
-    r"\bDROP\b", r"\bDELETE\b", r"\bUPDATE\b", r"\bINSERT\b", 
-    r"\bALTER\b", r"\bTRUNCATE\b", r"\bGRANT\b", r"\bREVOKE\b",
-    r"\bEXEC\b", r"\bEXECUTE\b", r"\bCREATE\b", r"\bREPLACE\b",
-    r"\bPG_SLEEP\b"
+    r"\bDROP\b",
+    r"\bDELETE\b",
+    r"\bUPDATE\b",
+    r"\bINSERT\b",
+    r"\bALTER\b",
+    r"\bTRUNCATE\b",
+    r"\bGRANT\b",
+    r"\bREVOKE\b",
+    r"\bEXEC\b",
+    r"\bEXECUTE\b",
+    r"\bCREATE\b",
+    r"\bREPLACE\b",
+    r"\bPG_SLEEP\b",
 ]
+
 
 def validate_and_sanitize_sql(raw_sql: str) -> str:
     """
@@ -85,34 +99,39 @@ def validate_and_sanitize_sql(raw_sql: str) -> str:
     cleaned = raw_sql.strip()
     cleaned = re.sub(r"^```(?:sql)?", "", cleaned, flags=re.IGNORECASE).strip()
     cleaned = re.sub(r"```$", "", cleaned).strip()
-    
+
     # Strip SQL comments to prevent comment-based filter evasion
     cleaned = re.sub(r"--.*?$", "", cleaned, flags=re.MULTILINE).strip()
     cleaned = re.sub(r"/\*.*?\*/", "", cleaned, flags=re.DOTALL).strip()
-    
+
     # Remove trailing semicolons
     cleaned = cleaned.rstrip(";").strip()
 
     # 2. Disallow multiple stacked statements (prevents 'SELECT 1; DROP TABLE products;')
     if ";" in cleaned:
-        raise SQLSecurityViolation("Security Violation: Multiple stacked SQL statements are forbidden.")
+        raise SQLSecurityViolation(
+            "Security Violation: Multiple stacked SQL statements are forbidden."
+        )
 
     # 3. Disallow mutation / destructive keywords
     for pattern in FORBIDDEN_SQL_KEYWORDS:
         if re.search(pattern, cleaned, flags=re.IGNORECASE):
             matched_kw = re.search(pattern, cleaned, flags=re.IGNORECASE).group()
-            raise SQLSecurityViolation(f"Security Violation: Destructive SQL command '{matched_kw}' is strictly prohibited.")
+            raise SQLSecurityViolation(
+                f"Security Violation: Destructive SQL command '{matched_kw}' is strictly prohibited."
+            )
 
     # 4. Enforce read-only prefix (SELECT or WITH for CTEs)
     if not (cleaned.upper().startswith("SELECT") or cleaned.upper().startswith("WITH")):
-        raise SQLSecurityViolation("Security Violation: Only read-only SELECT or WITH statements are allowed.")
+        raise SQLSecurityViolation(
+            "Security Violation: Only read-only SELECT or WITH statements are allowed."
+        )
 
     # 5. Append safety LIMIT if missing
     if not re.search(r"\bLIMIT\b", cleaned, flags=re.IGNORECASE):
         cleaned += " LIMIT 50"
 
     return cleaned
-
 
 
 # =====================================================================
@@ -138,10 +157,11 @@ async def generate_sql_query(user_query: str) -> str:
     Generates parameterized SQL using Gemini API or intelligent deterministic heuristic fallback.
     """
     gemini_api_key = os.getenv("GEMINI_API_KEY")
-    
+
     if gemini_api_key:
         try:
             import google.generativeai as genai
+
             genai.configure(api_key=gemini_api_key)
             model = genai.GenerativeModel("gemini-1.5-flash")
             prompt = f"{SQL_SYSTEM_PROMPT}\n\nUSER QUESTION: {user_query}\n\nSQL QUERY:"
@@ -153,10 +173,17 @@ async def generate_sql_query(user_query: str) -> str:
 
     # Intelligent Fallback SQL Generator for offline local development & testing
     q_lower = user_query.lower()
-    
-    if "order" in q_lower and ("completed" in q_lower or "status" in q_lower or "how many" in q_lower):
+
+    if "order" in q_lower and (
+        "completed" in q_lower or "status" in q_lower or "how many" in q_lower
+    ):
         raw = "SELECT status, count(*) AS total_orders, sum(total_amount) AS total_revenue FROM orders GROUP BY status"
-    elif "product" in q_lower or "stock" in q_lower or "inventory" in q_lower or "sku" in q_lower:
+    elif (
+        "product" in q_lower
+        or "stock" in q_lower
+        or "inventory" in q_lower
+        or "sku" in q_lower
+    ):
         raw = "SELECT sku, name, category, price, stock_quantity FROM products ORDER BY price DESC"
     elif "customer" in q_lower or "tier" in q_lower or "who" in q_lower:
         raw = "SELECT name, email, country, tier FROM customers ORDER BY name ASC"
@@ -172,7 +199,8 @@ async def generate_sql_query(user_query: str) -> str:
 # 4. Async Read-Only Execution Sandbox
 # =====================================================================
 
-async def execute_safe_sql(sql_query: str) -> Tuple[List[str], List[Dict[str, Any]]]:
+
+async def execute_safe_sql(sql_query: str) -> tuple[list[str], list[dict[str, Any]]]:
     """
     Executes validated SQL query in an async read-only transaction.
     Returns: (column_names, rows_as_dicts)
@@ -182,7 +210,7 @@ async def execute_safe_sql(sql_query: str) -> Tuple[List[str], List[Dict[str, An
         await session.execute(text("SET TRANSACTION READ ONLY;"))
         await session.execute(text("SET statement_timeout = '5000ms';"))
         result = await session.execute(text(sql_query))
-        
+
         # Extract column names
         columns = list(result.keys())
         # Extract data rows
@@ -194,11 +222,9 @@ async def execute_safe_sql(sql_query: str) -> Tuple[List[str], List[Dict[str, An
 # 5. Markdown Table & Response Formatter
 # =====================================================================
 
+
 def format_sql_results_as_markdown(
-    user_query: str, 
-    sql_query: str, 
-    columns: List[str], 
-    rows: List[Dict[str, Any]]
+    user_query: str, sql_query: str, columns: list[str], rows: list[dict[str, Any]]
 ) -> str:
     """Formats query results into an enterprise Markdown report with code inspection."""
     if not rows:
@@ -211,7 +237,7 @@ def format_sql_results_as_markdown(
     # Build Markdown Table
     header_row = "| " + " | ".join(columns) + " |"
     separator_row = "| " + " | ".join(["---"] * len(columns)) + " |"
-    
+
     data_rows = []
     for row in rows:
         row_str = "| " + " | ".join(str(row.get(col, "")) for col in columns) + " |"
@@ -221,7 +247,7 @@ def format_sql_results_as_markdown(
 
     return (
         f"📊 **[Text-to-SQL Copilot Engine]**\n\n"
-        f"**Question:** *\"{user_query}\"*\n\n"
+        f'**Question:** *"{user_query}"*\n\n'
         f"**Generated SQL Query:**\n```sql\n{sql_query}\n```\n\n"
         f"### 📋 Query Results ({len(rows)} record{'s' if len(rows) != 1 else ''}):\n\n"
         f"{table_markdown}\n\n"
@@ -233,7 +259,8 @@ def format_sql_results_as_markdown(
 # 6. End-to-End SQL Copilot Pipeline
 # =====================================================================
 
-async def run_text_to_sql_pipeline(user_query: str) -> Tuple[str, str, str]:
+
+async def run_text_to_sql_pipeline(user_query: str) -> tuple[str, str, str]:
     """
     Main orchestration entrypoint for Text-to-SQL:
     1. Generates and validates SQL.
@@ -245,24 +272,26 @@ async def run_text_to_sql_pipeline(user_query: str) -> Tuple[str, str, str]:
     try:
         # 1. Generate SQL
         sql_query = await generate_sql_query(user_query)
-        
+
         # 2. Execute SQL
         columns, rows = await execute_safe_sql(sql_query)
-        
+
         # 3. Format Response
-        markdown_response = format_sql_results_as_markdown(user_query, sql_query, columns, rows)
+        markdown_response = format_sql_results_as_markdown(
+            user_query, sql_query, columns, rows
+        )
         return sql_query, markdown_response, f"{len(rows)} rows returned"
-        
+
     except SQLSecurityViolation as sec_err:
         # Security sandbox rejection
-        err_msg = f"🛡️ **Security Sandbox Alert:** {str(sec_err)}"
+        err_msg = f"🛡️ **Security Sandbox Alert:** {sec_err!s}"
         return "BLOCKED", err_msg, "0 rows"
     except Exception as e:
-        err_msg = f"⚠️ **SQL Execution Error:** An issue occurred while running the query against PostgreSQL: `{str(e)}`"
+        err_msg = f"⚠️ **SQL Execution Error:** An issue occurred while running the query against PostgreSQL: `{e!s}`"
         return sql_query, err_msg, "0 rows"
 
 
-async def execute_text_to_sql(user_query: str) -> Dict[str, Any]:
+async def execute_text_to_sql(user_query: str) -> dict[str, Any]:
     """
     Structured execution wrapper for Text-to-SQL copilot:
     Returns a dictionary with 'sql_query', 'markdown_table', and 'summary' keys.
@@ -272,7 +301,5 @@ async def execute_text_to_sql(user_query: str) -> Dict[str, Any]:
     return {
         "sql_query": sql_query,
         "markdown_table": markdown_response,
-        "summary": summary
+        "summary": summary,
     }
-
-

@@ -7,23 +7,26 @@ Processes multi-page PDFs and text documents:
 4. Populates PostgreSQL document_chunks table with both pgvector embeddings and tsvector keyword data.
 """
 
+import asyncio
 import os
 import sys
-import asyncio
-from typing import List, Dict, Any, Optional
 from datetime import datetime
+from typing import Any
+
 from pypdf import PdfReader
+
 try:
     from langchain_text_splitters import RecursiveCharacterTextSplitter
 except ImportError:
     from langchain.text_splitter import RecursiveCharacterTextSplitter
 from sentence_transformers import SentenceTransformer
 from sqlalchemy import text
+
 from app.database import AsyncSessionLocal, init_db
 
 # Default local embedding model (384 dimensions, fast inference on CPU/GPU)
 EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
-_model_instance: Optional[SentenceTransformer] = None
+_model_instance: SentenceTransformer | None = None
 
 
 def get_embedding_model() -> SentenceTransformer:
@@ -35,7 +38,7 @@ def get_embedding_model() -> SentenceTransformer:
     return _model_instance
 
 
-def load_pdf(file_path: str) -> List[Dict[str, Any]]:
+def load_pdf(file_path: str) -> list[dict[str, Any]]:
     """
     Extracts text page-by-page from a PDF document with metadata.
     """
@@ -49,31 +52,31 @@ def load_pdf(file_path: str) -> List[Dict[str, Any]]:
     for idx, page in enumerate(reader.pages):
         page_text = page.extract_text() or ""
         if page_text.strip():
-            pages_data.append({
-                "content": page_text.strip(),
-                "metadata": {
-                    "document_name": doc_name,
-                    "document_id": doc_name.replace(" ", "_").lower(),
-                    "page_number": idx + 1,
-                    "total_pages": len(reader.pages),
-                    "source": file_path
+            pages_data.append(
+                {
+                    "content": page_text.strip(),
+                    "metadata": {
+                        "document_name": doc_name,
+                        "document_id": doc_name.replace(" ", "_").lower(),
+                        "page_number": idx + 1,
+                        "total_pages": len(reader.pages),
+                        "source": file_path,
+                    },
                 }
-            })
+            )
     return pages_data
 
 
 def chunk_documents(
-    documents: List[Dict[str, Any]], 
-    chunk_size: int = 500, 
-    chunk_overlap: int = 50
-) -> List[Dict[str, Any]]:
+    documents: list[dict[str, Any]], chunk_size: int = 500, chunk_overlap: int = 50
+) -> list[dict[str, Any]]:
     """
     Splits document pages into fixed-size semantic chunks with overlap.
     """
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=chunk_size,
         chunk_overlap=chunk_overlap,
-        separators=["\n\n", "\n", ". ", " ", ""]
+        separators=["\n\n", "\n", ". ", " ", ""],
     )
 
     all_chunks = []
@@ -86,22 +89,24 @@ def chunk_documents(
 
         for sub_idx, chunk_text in enumerate(split_texts):
             chunk_counter += 1
-            all_chunks.append({
-                "document_id": base_meta.get("document_id", "unknown_doc"),
-                "document_name": base_meta.get("document_name", "Unknown Document"),
-                "chunk_index": chunk_counter,
-                "content": chunk_text,
-                "metadata": {
-                    **base_meta,
-                    "chunk_sub_index": sub_idx,
-                    "char_count": len(chunk_text),
-                    "created_at": datetime.utcnow().isoformat()
+            all_chunks.append(
+                {
+                    "document_id": base_meta.get("document_id", "unknown_doc"),
+                    "document_name": base_meta.get("document_name", "Unknown Document"),
+                    "chunk_index": chunk_counter,
+                    "content": chunk_text,
+                    "metadata": {
+                        **base_meta,
+                        "chunk_sub_index": sub_idx,
+                        "char_count": len(chunk_text),
+                        "created_at": datetime.utcnow().isoformat(),
+                    },
                 }
-            })
+            )
     return all_chunks
 
 
-def generate_embeddings(chunks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def generate_embeddings(chunks: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """
     Generates 384-dimensional dense vector embeddings for each text chunk.
     """
@@ -115,7 +120,7 @@ def generate_embeddings(chunks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return chunks
 
 
-async def insert_chunks_to_db(chunks: List[Dict[str, Any]]) -> int:
+async def insert_chunks_to_db(chunks: list[dict[str, Any]]) -> int:
     """
     Persists document chunks into PostgreSQL with pgvector embeddings and tsvector full-text index.
     """
@@ -135,6 +140,7 @@ async def insert_chunks_to_db(chunks: List[Dict[str, Any]]) -> int:
         """)
 
         import json
+
         for chunk in chunks:
             await session.execute(
                 insert_query,
@@ -144,8 +150,8 @@ async def insert_chunks_to_db(chunks: List[Dict[str, Any]]) -> int:
                     "chunk_index": chunk["chunk_index"],
                     "content": chunk["content"],
                     "embedding": str(chunk["embedding"]),
-                    "metadata_json": json.dumps(chunk["metadata"])
-                }
+                    "metadata_json": json.dumps(chunk["metadata"]),
+                },
             )
         await session.commit()
 
@@ -153,7 +159,9 @@ async def insert_chunks_to_db(chunks: List[Dict[str, Any]]) -> int:
     return len(chunks)
 
 
-async def ingest_pipeline(file_path: Optional[str] = None, raw_docs: Optional[List[Dict[str, Any]]] = None) -> int:
+async def ingest_pipeline(
+    file_path: str | None = None, raw_docs: list[dict[str, Any]] | None = None
+) -> int:
     """
     Full ingestion pipeline orchestrator: Load -> Chunk -> Embed -> Database Insert.
     """
@@ -164,17 +172,19 @@ async def ingest_pipeline(file_path: Optional[str] = None, raw_docs: Optional[Li
         if file_path.endswith(".pdf"):
             docs = load_pdf(file_path)
         else:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
             doc_name = os.path.basename(file_path)
-            docs = [{
-                "content": content,
-                "metadata": {
-                    "document_name": doc_name,
-                    "document_id": doc_name.replace(" ", "_").lower(),
-                    "source": file_path
+            docs = [
+                {
+                    "content": content,
+                    "metadata": {
+                        "document_name": doc_name,
+                        "document_id": doc_name.replace(" ", "_").lower(),
+                        "source": file_path,
+                    },
                 }
-            }]
+            ]
     elif raw_docs:
         docs = raw_docs
     else:
@@ -186,7 +196,7 @@ async def ingest_pipeline(file_path: Optional[str] = None, raw_docs: Optional[Li
     return total_saved
 
 
-def get_sample_enterprise_docs() -> List[Dict[str, Any]]:
+def get_sample_enterprise_docs() -> list[dict[str, Any]]:
     """
     Generates rich enterprise seed documentation for instant zero-dependency testing.
     """
@@ -203,8 +213,8 @@ OmniCorp Global IT Security & Data Access Policy (Policy Ref: SEC-2026-V4)
                 "document_name": "OmniCorp_IT_Security_Policy.pdf",
                 "document_id": "sec_policy_2026",
                 "department": "Security",
-                "classification": "Internal Only"
-            }
+                "classification": "Internal Only",
+            },
         },
         {
             "content": """
@@ -218,8 +228,8 @@ OmniCorp Remote Work & Reimbursement Guidelines (HR-GUIDE-2026)
                 "document_name": "OmniCorp_Remote_Work_Guidelines.pdf",
                 "document_id": "hr_remote_2026",
                 "department": "Human Resources",
-                "classification": "Internal Only"
-            }
+                "classification": "Internal Only",
+            },
         },
         {
             "content": """
@@ -232,13 +242,13 @@ OmniCorp Customer Returns, Warranty & SLA Terms (SLA-DOC-802)
                 "document_name": "OmniCorp_Customer_SLA_Terms.pdf",
                 "document_id": "sla_terms_802",
                 "department": "Legal & Operations",
-                "classification": "Public"
-            }
-        }
+                "classification": "Public",
+            },
+        },
     ]
 
 
 if __name__ == "__main__":
     file_arg = sys.argv[1] if len(sys.argv) > 1 else None
-    print(f"Starting OmniQuery-AI Ingestion Pipeline...")
+    print("Starting OmniQuery-AI Ingestion Pipeline...")
     asyncio.run(ingest_pipeline(file_arg))

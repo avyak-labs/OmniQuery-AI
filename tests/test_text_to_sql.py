@@ -9,10 +9,11 @@ Tests:
 """
 
 import pytest
+
 from app.agents.sql_agent import (
-    validate_and_sanitize_sql,
     format_sql_results_as_markdown,
-    run_text_to_sql_pipeline
+    run_text_to_sql_pipeline,
+    validate_and_sanitize_sql,
 )
 
 
@@ -50,13 +51,13 @@ def test_markdown_table_formatting():
     cols = ["sku", "name", "price"]
     rows = [
         {"sku": "SKU-SRV-101", "name": "Enterprise Server 1U", "price": 2499.00},
-        {"sku": "SKU-SW-202", "name": "AI Analytics Pro", "price": 499.00}
+        {"sku": "SKU-SW-202", "name": "AI Analytics Pro", "price": 499.00},
     ]
     markdown = format_sql_results_as_markdown(
         user_query="List high value products",
         sql_query="SELECT sku, name, price FROM products LIMIT 2",
         columns=cols,
-        rows=rows
+        rows=rows,
     )
     assert "| sku | name | price |" in markdown
     assert "| SKU-SRV-101 | Enterprise Server 1U | 2499.0 |" in markdown
@@ -67,9 +68,8 @@ def test_markdown_table_formatting():
 async def test_end_to_end_text_to_sql_pipeline():
     """Verifies live query execution against the database, or graceful handled error when offline."""
     query = "How many total orders are in Completed status?"
-    sql, response, summary = await run_text_to_sql_pipeline(query)
-    
+    sql, response, _summary = await run_text_to_sql_pipeline(query)
+
     assert sql != "BLOCKED"
     assert "SELECT" in sql.upper()
     assert ("Text-to-SQL Copilot" in response) or ("SQL Execution Error" in response)
-

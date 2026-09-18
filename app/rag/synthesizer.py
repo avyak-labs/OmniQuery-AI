@@ -5,7 +5,8 @@ anti-hallucination guardrails and source citations.
 """
 
 import os
-from typing import List, Dict, Any, Optional
+from typing import Any
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -23,7 +24,7 @@ RULES:
 """.strip()
 
 
-def format_context_passages(chunks: List[Dict[str, Any]]) -> str:
+def format_context_passages(chunks: list[dict[str, Any]]) -> str:
     """Formats retrieved chunks into a clean context string for prompt injection."""
     if not chunks:
         return "No relevant documents found."
@@ -40,7 +41,7 @@ def format_context_passages(chunks: List[Dict[str, Any]]) -> str:
     return "\n\n".join(formatted_parts)
 
 
-async def synthesize_answer(query: str, chunks: List[Dict[str, Any]]) -> str:
+async def synthesize_answer(query: str, chunks: list[dict[str, Any]]) -> str:
     """
     Generates a grounded response using Gemini API, Ollama, or fallback generator.
     """
@@ -54,6 +55,7 @@ async def synthesize_answer(query: str, chunks: List[Dict[str, Any]]) -> str:
     if gemini_api_key:
         try:
             import google.generativeai as genai
+
             genai.configure(api_key=gemini_api_key)
             model = genai.GenerativeModel("gemini-1.5-flash")
             prompt = f"{SYSTEM_GROUNDING_PROMPT}\n\nCONTEXT:\n{context_str}\n\nQUESTION: {query}\n\nANSWER:"

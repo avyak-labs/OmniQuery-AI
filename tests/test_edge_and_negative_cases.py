@@ -10,17 +10,19 @@ Tests system resilience against:
 7. FastAPI Pydantic schema validation errors
 """
 
-import pytest
 import asyncio
+
+import pytest
+
+from app.agents.router import classify_intent_node
 from app.rag.hybrid_retriever import reciprocal_rank_fusion
 from app.rag.reranker import rerank_passages
 from app.rag.synthesizer import format_context_passages, synthesize_answer
-from app.agents.router import classify_intent_node
-
 
 # =====================================================================
 # 1. Reciprocal Rank Fusion (RRF) Edge Cases
 # =====================================================================
+
 
 def test_rrf_empty_lists():
     """Verifies that RRF returns an empty list when both dense and sparse return no results."""
@@ -31,11 +33,9 @@ def test_rrf_empty_lists():
 
 def test_rrf_asymmetric_dense_only():
     """Verifies that RRF correctly ranks results when sparse search yields 0 hits."""
-    dense_results = [
-        {"id": 101, "content": "Only found by dense vector search"}
-    ]
+    dense_results = [{"id": 101, "content": "Only found by dense vector search"}]
     sparse_results = []
-    
+
     fused = reciprocal_rank_fusion(dense_results, sparse_results, k=60)
     assert len(fused) == 1
     assert fused[0]["id"] == 101
@@ -48,7 +48,7 @@ def test_rrf_asymmetric_sparse_only():
     sparse_results = [
         {"id": 202, "content": "Exact keyword found by BM25 sparse search"}
     ]
-    
+
     fused = reciprocal_rank_fusion(dense_results, sparse_results, k=60)
     assert len(fused) == 1
     assert fused[0]["id"] == 202
@@ -58,6 +58,7 @@ def test_rrf_asymmetric_sparse_only():
 # =====================================================================
 # 2. FlashRank Re-ranker Edge Cases
 # =====================================================================
+
 
 def test_reranker_empty_candidates():
     """Verifies reranker handles empty candidate list gracefully without crashing."""
@@ -70,7 +71,7 @@ def test_reranker_corrupt_or_missing_metadata():
     corrupt_candidates = [
         {"id": 1, "content": None},
         {"id": 2},  # Missing content entirely
-        {"id": 3, "content": "Valid enterprise document text"}
+        {"id": 3, "content": "Valid enterprise document text"},
     ]
     results = rerank_passages("enterprise query", corrupt_candidates, top_n=2)
     assert len(results) <= 2
@@ -79,6 +80,7 @@ def test_reranker_corrupt_or_missing_metadata():
 # =====================================================================
 # 3. LLM Synthesizer & Anti-Hallucination Guardrails
 # =====================================================================
+
 
 def test_format_context_passages_empty():
     """Verifies context formatting handles empty chunks without raising IndexError."""
@@ -96,6 +98,7 @@ async def test_synthesizer_zero_context_fallback():
 # =====================================================================
 # 4. Intent Router Edge & Adversarial Inputs
 # =====================================================================
+
 
 def test_router_empty_and_whitespace_query():
     """Verifies empty or whitespace queries default to direct conversation instead of throwing."""
@@ -123,10 +126,14 @@ def test_router_ambiguous_cross_domain_query():
 
 def test_router_avoids_substring_collisions():
     """Verifies router doesn't trigger on substring collisions like 'fromage' or 'borders'."""
-    state_fromage = classify_intent_node({"query": "Tell me about French fromage", "query_type": None})
+    state_fromage = classify_intent_node(
+        {"query": "Tell me about French fromage", "query_type": None}
+    )
     assert state_fromage["query_type"] == "direct"
 
-    state_borders = classify_intent_node({"query": "What are the borders of Texas?", "query_type": None})
+    state_borders = classify_intent_node(
+        {"query": "What are the borders of Texas?", "query_type": None}
+    )
     assert state_borders["query_type"] == "direct"
 
 
@@ -134,10 +141,13 @@ def test_router_avoids_substring_collisions():
 # 5. FastAPI Ingress & Pydantic Validation Tests
 # =====================================================================
 
+
 def test_api_empty_query_returns_422():
     """Verifies that empty or whitespace query returns 422 Unprocessable Entity."""
     from fastapi.testclient import TestClient
+
     from app.main import app
+
     client = TestClient(app)
 
     res_empty = client.post("/api/v1/query", json={"query": ""})
@@ -151,7 +161,9 @@ def test_api_empty_query_returns_422():
 def test_api_oversized_query_returns_422():
     """Verifies that query exceeding 1000 characters is rejected with 422."""
     from fastapi.testclient import TestClient
+
     from app.main import app
+
     client = TestClient(app)
 
     oversized = "a" * 1001
@@ -162,7 +174,9 @@ def test_api_oversized_query_returns_422():
 def test_api_valid_query_structure():
     """Verifies that a valid conversational query returns 200 with proper QueryResponse structure."""
     from fastapi.testclient import TestClient
+
     from app.main import app
+
     client = TestClient(app)
 
     res = client.post("/api/v1/query", json={"query": "Hello"})
@@ -171,4 +185,3 @@ def test_api_valid_query_structure():
     assert data["query"] == "Hello"
     assert "route_selected" in data
     assert "response" in data
-

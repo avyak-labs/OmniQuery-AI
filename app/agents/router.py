@@ -7,44 +7,72 @@ Determines whether a user query is:
 """
 
 import re
-from typing import TypedDict, Literal, Optional, List, Dict, Any
-from langgraph.graph import StateGraph, END
+from typing import Any, Literal, TypedDict
+
+from langgraph.graph import END, StateGraph
+
+from app.agents.sql_agent import run_text_to_sql_pipeline
 from app.rag.hybrid_retriever import retrieve_context
 from app.rag.synthesizer import synthesize_answer
-from app.agents.sql_agent import run_text_to_sql_pipeline
 
 
 class AgentState(TypedDict):
     query: str
-    query_type: Optional[Literal["rag", "sql", "direct"]]
-    retrieved_chunks: Optional[List[Dict[str, Any]]]
-    sql_query: Optional[str]
-    sql_result: Optional[str]
-    response: Optional[str]
+    query_type: Literal["rag", "sql", "direct"] | None
+    retrieved_chunks: list[dict[str, Any]] | None
+    sql_query: str | None
+    sql_result: str | None
+    response: str | None
 
 
 def classify_intent_node(state: AgentState) -> AgentState:
     """Classifies user intent based on keywords and schema detection."""
     raw_query = state.get("query") or ""
     query = raw_query.strip().lower()
-    
+
     if not query:
         state["query_type"] = "direct"
         return state
-    
+
     # SQL indicators: numbers, count, sales, revenue, totals, database tables, raw sql
     sql_keywords = [
-        "how many", "count", "total", "sales", "revenue", "average", "highest", 
-        "lowest", "list all users", "orders", "customers", "products", "stock",
-        "select", "from", "drop table", "insert into"
+        "how many",
+        "count",
+        "total",
+        "sales",
+        "revenue",
+        "average",
+        "highest",
+        "lowest",
+        "list all users",
+        "orders",
+        "customers",
+        "products",
+        "stock",
+        "select",
+        "from",
+        "drop table",
+        "insert into",
     ]
-    
+
     # Document RAG indicators: explain, policy, guide, summary, what is, how to, return, SLA, error
     doc_keywords = [
-        "what is", "how do i", "explain", "policy", "terms", "overview", 
-        "documentation", "steps to", "reimbursement", "allowance", "mfa", "sla", "warranty", "err_"
+        "what is",
+        "how do i",
+        "explain",
+        "policy",
+        "terms",
+        "overview",
+        "documentation",
+        "steps to",
+        "reimbursement",
+        "allowance",
+        "mfa",
+        "sla",
+        "warranty",
+        "err_",
     ]
-    
+
     def matches_keyword(pattern: str, text: str) -> bool:
         # If pattern ends with an underscore (like prefix err_), match without trailing boundary
         if pattern.endswith("_"):
@@ -57,9 +85,8 @@ def classify_intent_node(state: AgentState) -> AgentState:
         state["query_type"] = "rag"
     else:
         state["query_type"] = "direct"
-        
-    return state
 
+    return state
 
 
 def route_query(state: AgentState) -> str:
@@ -104,7 +131,7 @@ async def sql_handler_node(state: AgentState) -> AgentState:
         state["sql_result"] = summary
         state["response"] = formatted_response
     except Exception as e:
-        state["response"] = f"⚠️ Error executing database query: {str(e)}"
+        state["response"] = f"⚠️ Error executing database query: {e!s}"
     return state
 
 
@@ -122,28 +149,24 @@ async def direct_llm_node(state: AgentState) -> AgentState:
 def create_agent_graph():
     """Builds and compiles the LangGraph state graph."""
     workflow = StateGraph(AgentState)
-    
+
     workflow.add_node("classifier", classify_intent_node)
     workflow.add_node("rag_node", rag_handler_node)
     workflow.add_node("sql_node", sql_handler_node)
     workflow.add_node("direct_node", direct_llm_node)
-    
+
     workflow.set_entry_point("classifier")
-    
+
     workflow.add_conditional_edges(
         "classifier",
         route_query,
-        {
-            "rag": "rag_node",
-            "sql": "sql_node",
-            "direct": "direct_node"
-        }
+        {"rag": "rag_node", "sql": "sql_node", "direct": "direct_node"},
     )
-    
+
     workflow.add_edge("rag_node", END)
     workflow.add_edge("sql_node", END)
     workflow.add_edge("direct_node", END)
-    
+
     return workflow.compile()
 
 
