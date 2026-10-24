@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+:root {
+  --omni-bg: #0a0e1a;
+  --omni-surface: #111827;
+  --omni-surface-2: #1f2937;
+  --omni-border: #374151;
+  --omni-accent: #6366f1;
+  --omni-accent-hover: #4f46e5;
+  --omni-accent-glow: rgba(99, 102, 241, 0.15);
+  --omni-text: #f9fafb;
+  --omni-text-muted: #9ca3af;
+  --omni-success: #10b981;
+  --omni-warning: #f59e0b;
+  --omni-error: #ef4444;
+  --omni-sql: #22d3ee;
+  --omni-rag: #a78bfa;
+  --omni-direct: #6b7280;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--omni-bg);
+  color: var(--omni-text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--omni-surface); }
+::-webkit-scrollbar-thumb { background: var(--omni-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--omni-accent); }
+
+/* Smooth token appear animation */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.token-appear { animation: fadeInUp 0.15s ease-out; }
+
+/* Cursor blink */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.cursor-blink { animation: blink 0.8s step-end infinite; }
+
+/* Glow pulse for streaming */
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 8px var(--omni-accent-glow); }
+  50%       { box-shadow: 0 0 20px var(--omni-accent-glow); }
+}
+.streaming-glow { animation: glow 1.5s ease-in-out infinite; }
+
+/* Syntax highlight */
+pre { background: #0d1117 !important; border-radius: 8px; overflow-x: auto; }
+code { font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace; }

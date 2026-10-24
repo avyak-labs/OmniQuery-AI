@@ -56,6 +56,23 @@ services:
     networks:
       - omniquery_network
 
+  # ── Enterprise Web Console (React + Vite + Tailwind CSS) ──────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Inside Docker the browser talks to the api service via published port
+        VITE_API_URL: http://localhost:8000
+    container_name: omniquery_frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    networks:
+      - omniquery_network
+
 volumes:
   pgdata:
 

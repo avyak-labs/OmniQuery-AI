@@ -1,26 +1,41 @@
 import asyncio
+import json
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 
 from app.agents.router import agent_app
 from app.database import init_db
 
-app = FastAPI(
-    title="OmniQuery-AI API",
-    description="Enterprise Hybrid RAG & Autonomous SQL Copilot Backend",
-    version="1.0.0",
-)
 
-
-@app.on_event("startup")
-async def on_startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     try:
         await init_db()
         print("Database & pgvector extension initialized successfully.")
     except Exception as e:
         print(f"Notice: Database connection offline or initializing: {e}")
+    yield
+
+
+app = FastAPI(
+    title="OmniQuery-AI API",
+    description="Enterprise Hybrid RAG & Autonomous SQL Copilot Backend",
+    version="1.0.0",
+    lifespan=lifespan,
+)
+
+# Enable CORS for Next.js / Vite web console and external integrations
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class QueryRequest(BaseModel):
@@ -82,9 +97,15 @@ async def handle_query(request: QueryRequest):
 
 @app.post("/api/v1/stream")
 async def stream_query(request: QueryRequest):
-    """Server-Sent Events (SSE) streaming endpoint for real-time token delivery."""
+    """
+    Server-Sent Events (SSE) streaming endpoint emitting:
+    1. event: metadata (route_selected, sql_query, sql_result, retrieved_chunks)
+    2. event: token (real-time generated tokens/chunks)
+    3. event: done (completion signal)
+    4. event: error (sanitized fail-safe error message)
+    """
 
-    async def token_generator():
+    async def event_generator():
         try:
             initial_state = {
                 "query": request.query,
@@ -96,15 +117,53 @@ async def stream_query(request: QueryRequest):
             }
 
             result = await agent_app.ainvoke(initial_state)
-            response_text = result.get("response", "")
 
-            # Stream response chunk-by-chunk
-            words = response_text.split(" ")
-            for word in words:
-                yield f"data: {word} \n\n"
-                await asyncio.sleep(0.05)
+            # 1. Emit Metadata Event
+            raw_chunks = result.get("retrieved_chunks") or []
+            serialized_chunks = []
+            for c in raw_chunks:
+                if isinstance(c, dict):
+                    meta = c.get("metadata") or {}
+                    serialized_chunks.append({
+                        "content": c.get("content", ""),
+                        "source": meta.get("source", "Enterprise Knowledge Base") if isinstance(meta, dict) else "Enterprise Knowledge Base",
+                        "page": meta.get("page", 1) if isinstance(meta, dict) else 1,
+                        "score": round(float(c.get("score", 0.0)), 4) if c.get("score") is not None else 0.0,
+                    })
+
+            metadata = {
+                "route_selected": result.get("query_type", "direct"),
+                "sql_query": result.get("sql_query"),
+                "sql_result": result.get("sql_result"),
+                "retrieved_chunks": serialized_chunks,
+            }
+            yield f"event: metadata\ndata: {json.dumps(metadata)}\n\n"
+
+            # 2. Emit Token Stream
+            response_text = result.get("response", "")
+            if response_text:
+                words = response_text.split(" ")
+                for word in words:
+                    token_payload = {"token": word + " "}
+                    yield f"event: token\ndata: {json.dumps(token_payload)}\n\n"
+                    await asyncio.sleep(0.02)
+
+            # 3. Emit Done Event
+            yield f"event: done\ndata: {json.dumps({'status': 'complete'})}\n\n"
+
         except Exception as e:
             print(f"[SECURITY ALERT] Streaming exception: {e}")
-            yield "event: error\ndata: ⚠️ An error occurred while generating your response. Please try again.\n\n"
+            error_payload = {
+                "error": "A temporary error occurred while processing your query. Please try again."
+            }
+            yield f"event: error\ndata: {json.dumps(error_payload)}\n\n"
 
-    return StreamingResponse(token_generator(), media_type="text/event-stream")
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
