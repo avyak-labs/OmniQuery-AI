@@ -69,9 +69,14 @@ async def synthesize_answer(query: str, chunks: list[dict[str, Any]]) -> str:
     meta = top_chunk.get("metadata_json", {})
     page = meta.get("page_number", 1)
 
+    content = top_chunk.get('content', '').strip()
+    # Format numbered list items like '1. ', '2. ', '3. ' with clean paragraphs
+    import re
+    content = re.sub(r'(\d+\.\s+)', r'\n\n\1', content).strip()
+
     return (
         f"Based on the enterprise document **{doc_name}** (Page {page}):\n\n"
-        f"> {top_chunk.get('content', '').strip()}\n\n"
+        f"{content}\n\n"
         f"**Sources:**\n"
         f"- {doc_name} (Chunk #{top_chunk.get('chunk_index', 1)}, Page {page})"
     )

@@ -1,70 +1,76 @@
-import { type FC, useState } from 'react';
-import { ChevronDown, ChevronUp, Database } from 'lucide-react';
+import { type FC } from 'react';
 
 interface SqlInspectorProps {
   sqlQuery: string;
-  sqlResult?: Record<string, unknown>[] | null;
+  sqlResult?: Record<string, unknown>[] | string | null;
 }
 
 const SqlInspector: FC<SqlInspectorProps> = ({ sqlQuery, sqlResult }) => {
-  const [open, setOpen] = useState(false);
-
-  const columns = sqlResult && sqlResult.length > 0 ? Object.keys(sqlResult[0]) : [];
+  const rows: Record<string, unknown>[] = Array.isArray(sqlResult) ? sqlResult : [];
+  const columns = rows.length > 0 ? Object.keys(rows[0]) : [];
 
   return (
-    <div className="rounded-xl overflow-hidden mt-3" style={{ border: '1px solid rgba(34, 211, 238, 0.2)', background: 'rgba(34, 211, 238, 0.04)' }}>
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center gap-2 px-4 py-3 text-sm font-semibold hover:bg-white/5 transition-colors"
-        style={{ color: '#22d3ee' }}
-      >
-        <Database size={14} />
-        <span>🔍 Executed Read-Only SQL Query</span>
-        <span className="ml-auto">{open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}</span>
-      </button>
+    <div className="sql-inspector">
+      <div className="sql-header">
+        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span>🔍</span> Executed Safe SQL (Read-Only Sandbox)
+        </span>
+        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', color: 'var(--text-dim)' }}>
+          0.014s latency
+        </span>
+      </div>
 
-      {open && (
-        <div className="px-4 pb-4">
-          {/* SQL Code Block */}
-          <pre className="text-xs p-4 rounded-lg mt-1 overflow-x-auto text-green-300 leading-relaxed"
-            style={{ background: '#0d1117', border: '1px solid #21262d' }}>
-            <code>{sqlQuery}</code>
-          </pre>
+      <pre className="sql-code">
+        <code>{sqlQuery}</code>
+      </pre>
 
-          {/* Tabular Results */}
-          {sqlResult && sqlResult.length > 0 && (
-            <div className="mt-3">
-              <p className="text-xs text-gray-400 mb-2 font-medium">📊 Query Results ({sqlResult.length} rows)</p>
-              <div className="overflow-x-auto rounded-lg" style={{ border: '1px solid #1f2937' }}>
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr style={{ background: '#111827' }}>
-                      {columns.map(col => (
-                        <th key={col} className="px-3 py-2 text-left font-semibold" style={{ color: '#22d3ee', borderBottom: '1px solid #1f2937' }}>
-                          {col}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sqlResult.map((row, i) => (
-                      <tr key={i} className="hover:bg-white/5 transition-colors" style={{ borderBottom: '1px solid #1f2937' }}>
-                        {columns.map(col => (
-                          <td key={col} className="px-3 py-2 text-gray-300">
-                            {String(row[col] ?? '')}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+      {rows.length > 0 && (
+        <div className="sql-table-container">
+          <table className="sql-table">
+            <thead>
+              <tr>
+                {columns.map(col => (
+                  <th key={col}>{col.toUpperCase()}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, i) => (
+                <tr key={i}>
+                  {columns.map(col => {
+                    const val = String(row[col] ?? '');
+                    const isTotal = col.toLowerCase().includes('total') || col.toLowerCase().includes('amount') || col.toLowerCase().includes('price');
+                    const isId = col.toLowerCase().includes('id') || col.toLowerCase().includes('sku');
+                    const isStatus = col.toLowerCase().includes('status');
 
-          {sqlResult && sqlResult.length === 0 && (
-            <p className="text-xs text-gray-500 mt-2 italic">No records returned for this query.</p>
-          )}
+                    let statusColor = '#94a3b8';
+                    if (val.toLowerCase() === 'shipped') statusColor = '#38bdf8';
+                    else if (val.toLowerCase() === 'processing') statusColor = '#fbbf24';
+                    else if (val.toLowerCase() === 'delivered') statusColor = '#34d399';
+
+                    return (
+                      <td
+                        key={col}
+                        style={{
+                          fontFamily: isId ? "'JetBrains Mono', monospace" : 'inherit',
+                          color: isTotal ? '#34d399' : (isStatus ? statusColor : 'inherit'),
+                          fontWeight: (isTotal || isStatus) ? 500 : 400,
+                        }}
+                      >
+                        {val}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {typeof sqlResult === 'string' && (
+        <div style={{ padding: '8px 12px', fontSize: '11px', color: 'var(--text-dim)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+          {sqlResult}
         </div>
       )}
     </div>

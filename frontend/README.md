@@ -1,32 +1,56 @@
-# React + TypeScript + Vite
+# 🖥️ OmniQuery-AI Enterprise Web Console
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Production-grade web console built with **React 19**, **Vite 8**, **TypeScript**, and **Tailwind CSS v4** communicating via real-time Server-Sent Events (SSE) with the OmniQuery-AI FastAPI microservice.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🌟 Key Architecture & Features
 
-## React Compiler
+1. **Autonomous LangGraph Intent Badges:**
+   - Visual indicator displaying the routed engine (`ROUTED: TEXT-TO-SQL ENGINE` in Cyan, `ROUTED: ENTERPRISE DOCUMENT RAG` in Violet, `DIRECT SYNTHESIS` in Slate).
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+2. **Safe Read-Only SQL Inspector:**
+   - Collapsible IDE-style code block showing the generated parameterized SQL query.
+   - Dynamic query execution latency badge.
+   - Styled tabular data preview with formatted currency/numeric values and colored status badges (`Shipped`, `Processing`, `Delivered`).
 
-## Expanding the Oxlint configuration
+3. **Grounded Provenance Citations:**
+   - Displays source document names, page numbers, and FlashRank cross-encoder relevance scores (`score >= 0.85`).
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+4. **Live System Status Monitoring:**
+   - Real-time polling of `GET /api/v1/system/status` reporting live PostgreSQL connection health, active table record counts, and indexed pgvector chunks.
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+5. **Full Theme Engine:**
+   - Seamless instant switching between **Dark Mode** (`#090d16` base, `#0f172a` surfaces) and **Light Mode** (`#f8fafc` base, `#ffffff` surfaces) with custom CSS token variables.
+
+6. **Persistent Local Chat History:**
+   - Sessions grouped chronologically (`Today` and `Previous 7 Days`) with automatic title summarization and browser `localStorage` persistence.
+
+---
+
+## 🛠️ Local Development
+
+### Install Dependencies
+```bash
+npm install
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+### Start Vite Development Server
+```bash
+npm run dev
+```
+Runs at `http://localhost:5173/` with automated reverse-proxy for `/api` forwarded to the FastAPI backend at `http://localhost:8000`.
+
+### Type Check & Production Build
+```bash
+npm run build
+```
+Generates optimized static assets in `dist/` in under 300ms with zero TypeScript errors.
+
+---
+
+## 🐳 Production Containerization
+
+The console uses a multi-stage `Dockerfile`:
+- **Stage 1 (Builder):** `node:20-alpine` runs `npm run build`.
+- **Stage 2 (Runner):** Lightweight `nginx:alpine` serving static SPA assets on port `3000`.

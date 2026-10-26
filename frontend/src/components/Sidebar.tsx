@@ -1,88 +1,137 @@
-import { Brain, Cpu, Layers, Activity } from 'lucide-react';
+import { type FC } from 'react';
+import type { Session, SystemConnection } from '../types';
 
-const Sidebar = () => {
-  const capabilities = [
-    { icon: <Layers size={13} />, label: 'Hybrid RAG', detail: 'pgvector + BM25 + RRF', color: '#a78bfa' },
-    { icon: <Cpu size={13} />, label: 'FlashRank Re-ranking', detail: 'TinyBERT Cross-Encoder', color: '#a78bfa' },
-    { icon: <Brain size={13} />, label: 'LangGraph Router', detail: 'Conditional State Machine', color: '#6366f1' },
-    { icon: <Activity size={13} />, label: 'Text-to-SQL', detail: '5-Layer Security Sandbox', color: '#22d3ee' },
-  ];
+interface SidebarProps {
+  sessions: Session[];
+  activeSessionId: string;
+  connections?: SystemConnection[];
+  onSelectSession: (id: string) => void;
+  onNewSession: () => void;
+}
 
-  const metrics = [
-    { label: 'Faithfulness', value: '99.70%', color: '#10b981' },
-    { label: 'Answer Relevance', value: '88.00%', color: '#10b981' },
-    { label: 'Context Precision', value: '86.00%', color: '#10b981' },
-  ];
+const Sidebar: FC<SidebarProps> = ({
+  sessions,
+  activeSessionId,
+  connections = [],
+  onSelectSession,
+  onNewSession,
+}) => {
+  const nonEmptySessions = sessions.filter(s => s.messages.length > 0);
+
+  const now = Date.now();
+  const oneDayMs = 24 * 60 * 60 * 1000;
+
+  const todaySessions = nonEmptySessions.filter(
+    s => now - new Date(s.createdAt).getTime() < oneDayMs
+  );
+  const pastSessions = nonEmptySessions.filter(
+    s => now - new Date(s.createdAt).getTime() >= oneDayMs
+  );
 
   return (
-    <aside className="hidden md:flex flex-col w-72 flex-shrink-0 h-full"
-      style={{ background: 'var(--omni-surface)', borderRight: '1px solid var(--omni-border)' }}>
-
-      {/* Logo */}
-      <div className="p-5" style={{ borderBottom: '1px solid var(--omni-border)' }}>
-        <div className="flex items-center gap-3 mb-1">
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center text-lg"
-            style={{ background: 'var(--omni-accent-glow)', border: '1px solid rgba(99,102,241,0.4)' }}>
-            🤖
-          </div>
+    <aside className="sidebar">
+      {/* Workspace / Org Switcher */}
+      <div className="org-switcher">
+        <div className="org-info">
+          <div className="org-icon">A</div>
           <div>
-            <h1 className="text-sm font-bold" style={{ color: 'var(--omni-text)' }}>OmniQuery-AI</h1>
-            <p className="text-xs" style={{ color: 'var(--omni-text-muted)' }}>Enterprise Copilot v1.0</p>
+            <div className="org-title">OmniQuery AI</div>
+            <div className="org-sub">Avyak Labs · Enterprise</div>
           </div>
         </div>
-        <div className="mt-3 flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-          <span className="text-xs" style={{ color: 'var(--omni-text-muted)' }}>Backend Online</span>
-        </div>
+        <span style={{ color: 'var(--text-dim)', fontSize: '12px' }}>▾</span>
       </div>
 
-      {/* Architecture */}
-      <div className="p-4" style={{ borderBottom: '1px solid var(--omni-border)' }}>
-        <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--omni-text-muted)' }}>
-          Active Engines
-        </p>
-        <div className="space-y-2.5">
-          {capabilities.map(cap => (
-            <div key={cap.label} className="flex items-center gap-2.5">
-              <div className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ background: `${cap.color}18`, color: cap.color }}>
-                {cap.icon}
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-medium" style={{ color: 'var(--omni-text)' }}>{cap.label}</p>
-                <p className="text-xs truncate" style={{ color: 'var(--omni-text-muted)' }}>{cap.detail}</p>
-              </div>
-              <div className="ml-auto w-1.5 h-1.5 rounded-full bg-green-400 flex-shrink-0" />
+      {/* New Query CTA (without Ctrl K badge as requested) */}
+      <button className="new-chat-btn" onClick={onNewSession} style={{ justifyContent: 'center', gap: '8px' }}>
+        <span style={{ fontSize: '16px', lineHeight: 1 }}>+</span>
+        <span>New Query</span>
+      </button>
+
+      {/* Real Dynamic Chat History List */}
+      <div className="nav-section">
+        {todaySessions.length > 0 && (
+          <>
+            <div className="nav-label">Today</div>
+            {todaySessions.map(session => {
+              const isActive = session.id === activeSessionId;
+              return (
+                <div
+                  key={session.id}
+                  onClick={() => onSelectSession(session.id)}
+                  className={`chat-item ${isActive ? 'active' : ''}`}
+                  title={session.title}
+                >
+                  <span className="chat-icon">💬</span>
+                  <span className="truncate">{session.title}</span>
+                </div>
+              );
+            })}
+          </>
+        )}
+
+        {pastSessions.length > 0 && (
+          <>
+            <div className="nav-label" style={{ marginTop: '14px' }}>
+              Previous 7 Days
             </div>
-          ))}
-        </div>
+            {pastSessions.map(session => {
+              const isActive = session.id === activeSessionId;
+              return (
+                <div
+                  key={session.id}
+                  onClick={() => onSelectSession(session.id)}
+                  className={`chat-item ${isActive ? 'active' : ''}`}
+                  title={session.title}
+                >
+                  <span className="chat-icon">💬</span>
+                  <span className="truncate">{session.title}</span>
+                </div>
+              );
+            })}
+          </>
+        )}
+
+        {todaySessions.length === 0 && pastSessions.length === 0 && (
+          <div style={{ padding: '24px 10px', textAlign: 'center', color: 'var(--text-dim)', fontSize: '12px' }}>
+            No previous investigations yet. Start a query below!
+          </div>
+        )}
       </div>
 
-      {/* RAGAS Quality Scores */}
-      <div className="p-4">
-        <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--omni-text-muted)' }}>
-          RAGAS Quality Gate
-        </p>
-        <div className="space-y-2">
-          {metrics.map(m => (
-            <div key={m.label} className="flex items-center justify-between">
-              <span className="text-xs" style={{ color: 'var(--omni-text-muted)' }}>{m.label}</span>
-              <span className="text-xs font-mono font-semibold" style={{ color: m.color }}>{m.value}</span>
+      {/* Live Connected Repositories Box */}
+      <div className="data-sources-box">
+        <div className="data-sources-header">Active Data Connections</div>
+        {connections && connections.length > 0 ? (
+          connections.map(conn => (
+            <div key={conn.id} className="source-row" title={conn.detail}>
+              <div
+                className="status-dot"
+                style={{
+                  background: conn.status === 'connected' ? 'var(--success)' : '#ef4444',
+                  boxShadow: conn.status === 'connected' ? '0 0 6px rgba(16, 185, 129, 0.6)' : 'none',
+                }}
+              />
+              <span className="truncate" style={{ fontSize: '10.5px' }}>
+                {conn.name}
+              </span>
             </div>
-          ))}
-        </div>
-        <div className="mt-4 rounded-lg p-3 text-xs" style={{ background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-          <p className="font-semibold" style={{ color: '#10b981' }}>✅ All Quality Gates Passing</p>
-          <p className="mt-0.5" style={{ color: 'var(--omni-text-muted)' }}>Automated RAGAS regression suite (28/28 tests green)</p>
-        </div>
+          ))
+        ) : (
+          <div style={{ fontSize: '11px', color: 'var(--text-dim)' }}>Checking live services...</div>
+        )}
       </div>
 
-      {/* Footer */}
-      <div className="mt-auto p-4" style={{ borderTop: '1px solid var(--omni-border)' }}>
-        <p className="text-xs" style={{ color: 'var(--omni-text-muted)' }}>
-          Built by <span className="font-semibold text-gray-300">Avyak Labs</span><br />
-          Janar (AI Architect) · Canishe (GenAI Engineer)
-        </p>
+      {/* User Profile Footer */}
+      <div className="user-footer">
+        <div className="user-meta">
+          <div className="avatar">CC</div>
+          <div>
+            <div className="user-name">Canishe C</div>
+            <div className="user-role">GenAI Engineer</div>
+          </div>
+        </div>
+        <span style={{ color: 'var(--text-dim)', fontSize: '14px' }}>⚙️</span>
       </div>
     </aside>
   );

@@ -1,10 +1,19 @@
-import type { StreamMetadata } from '../types';
+import type { StreamMetadata, SystemStatus } from '../types';
 
-// In local dev: Vite proxy forwards /api → http://localhost:8000/api (see vite.config.ts)
-// In Docker:    nginx serves static build; browser calls VITE_API_URL directly
 const API_BASE = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/api`
   : '/api';
+
+export async function fetchSystemStatus(): Promise<SystemStatus | null> {
+  try {
+    const res = await fetch(`${API_BASE}/v1/system/status`);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (err) {
+    console.warn('Failed to fetch system connection status:', err);
+    return null;
+  }
+}
 
 export async function streamQuery(
   query: string,

@@ -1,5 +1,5 @@
 import { type FC, type FormEvent, useRef } from 'react';
-import { Send, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 interface ChatInputProps {
   onSubmit: (query: string) => void;
@@ -25,36 +25,41 @@ const ChatInput: FC<ChatInputProps> = ({ onSubmit, isStreaming }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="px-4 py-4" style={{ borderTop: '1px solid var(--omni-border)' }}>
-      <div
-        className={`flex items-end gap-3 rounded-2xl p-3 transition-all ${isStreaming ? 'streaming-glow' : ''}`}
-        style={{ background: 'var(--omni-surface)', border: '1px solid var(--omni-border)' }}
-      >
+    <div className="input-wrapper">
+      <form onSubmit={handleSubmit} className="input-box">
         <textarea
           ref={textareaRef}
           onKeyDown={handleKeyDown}
           disabled={isStreaming}
-          placeholder={isStreaming ? 'Generating response…' : 'Ask about documents or database records… (Enter to send, Shift+Enter for newline)'}
+          placeholder="Ask questions across documents or query business metrics in SQL..."
           rows={1}
-          className="flex-1 resize-none bg-transparent text-sm outline-none placeholder-gray-600 leading-relaxed max-h-32 overflow-y-auto"
-          style={{ color: 'var(--omni-text)' }}
+          className="input-field"
         />
-        <button
-          type="submit"
-          disabled={isStreaming}
-          className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{ background: isStreaming ? 'var(--omni-border)' : 'var(--omni-accent)' }}
-        >
-          {isStreaming
-            ? <Loader2 size={16} className="animate-spin text-white" />
-            : <Send size={16} className="text-white" />
-          }
-        </button>
-      </div>
-      <p className="text-center text-xs mt-2" style={{ color: 'var(--omni-text-muted)' }}>
-        OmniQuery-AI may make mistakes. Verify SQL results independently. Powered by Avyak Labs.
+        <div className="input-bottom-row">
+          <div className="input-hints">
+            <span>
+              <strong>Enter</strong> to send
+            </span>
+            <span>
+              <strong>Shift + Enter</strong> for newline
+            </span>
+          </div>
+
+          <button type="submit" disabled={isStreaming} className="send-btn">
+            {isStreaming ? (
+              <Loader2 size={14} className="animate-spin text-white" />
+            ) : (
+              '➔'
+            )}
+          </button>
+        </div>
+      </form>
+
+      {/* Enterprise One-Liner Disclaimer */}
+      <p className="disclaimer-text">
+        OmniQuery-AI can make mistakes. Responses are synthesized from connected enterprise repositories and database records — verify critical financial or legal figures.
       </p>
-    </form>
+    </div>
   );
 };
 

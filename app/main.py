@@ -68,6 +68,71 @@ async def root():
     }
 
 
+@app.get("/api/v1/system/status")
+async def get_system_status():
+    """Returns live connection health and real row/document statistics from PostgreSQL."""
+    from sqlalchemy import func, select, text
+
+    from app.database import AsyncSessionLocal
+    from app.models import Customer, DocumentChunk, Order, Product
+
+    connections = []
+
+    # 1. Check PostgreSQL & SQL Catalog
+    try:
+        async with AsyncSessionLocal() as session:
+            # Check DB ping
+            await session.execute(text("SELECT 1;"))
+
+            # Query actual counts
+            prod_count = (await session.execute(select(func.count(Product.id)))).scalar() or 0
+            cust_count = (await session.execute(select(func.count(Customer.id)))).scalar() or 0
+            order_count = (await session.execute(select(func.count(Order.id)))).scalar() or 0
+            total_records = prod_count + cust_count + order_count
+
+            connections.append({
+                "id": "postgres",
+                "name": "PostgreSQL 16 (analytics_db)",
+                "type": "sql",
+                "status": "connected",
+                "detail": f"{total_records} records (products, orders, customers)",
+            })
+
+            # 2. Check Document Vector Store
+            doc_chunks_count = (await session.execute(select(func.count(DocumentChunk.id)))).scalar() or 0
+            distinct_docs = (await session.execute(select(func.count(func.distinct(DocumentChunk.document_id))))).scalar() or 0
+
+            connections.append({
+                "id": "knowledge_base",
+                "name": "Enterprise Knowledge Base (pgvector)",
+                "type": "vector",
+                "status": "connected",
+                "detail": f"{distinct_docs} docs ({doc_chunks_count} chunks indexed)" if distinct_docs > 0 else "In-Memory Fallback Corpus",
+            })
+    except Exception as e:
+        print(f"Error fetching live system connections: {e}")
+        connections.append({
+            "id": "postgres",
+            "name": "PostgreSQL 16 (analytics_db)",
+            "type": "sql",
+            "status": "offline",
+            "detail": "Database connection offline",
+        })
+        connections.append({
+            "id": "knowledge_base",
+            "name": "Enterprise Knowledge Base (pgvector)",
+            "type": "vector",
+            "status": "offline",
+            "detail": "Vector repository offline",
+        })
+
+    return {
+        "status": "online",
+        "copilot": "LangGraph Active",
+        "connections": connections,
+    }
+
+
 @app.post("/api/v1/query", response_model=QueryResponse)
 async def handle_query(request: QueryRequest):
     """Synchronous JSON endpoint returning full response."""

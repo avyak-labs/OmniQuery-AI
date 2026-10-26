@@ -246,7 +246,7 @@ def format_sql_results_as_markdown(
     table_markdown = "\n".join([header_row, separator_row] + data_rows)
 
     return (
-        f"📊 **[Text-to-SQL Copilot Engine]**\n\n"
+        f"📊 **[Text-to-SQL Copilot]**\n\n"
         f'**Question:** *"{user_query}"*\n\n'
         f"**Generated SQL Query:**\n```sql\n{sql_query}\n```\n\n"
         f"### 📋 Query Results ({len(rows)} record{'s' if len(rows) != 1 else ''}):\n\n"
@@ -260,13 +260,12 @@ def format_sql_results_as_markdown(
 # =====================================================================
 
 
-async def run_text_to_sql_pipeline(user_query: str) -> tuple[str, str, str]:
+async def run_text_to_sql_pipeline(user_query: str) -> tuple[str, str, Any]:
     """
     Main orchestration entrypoint for Text-to-SQL:
     1. Generates and validates SQL.
     2. Executes safely against PostgreSQL.
-    3. Formats response with Markdown tables.
-    Returns: (sql_query, formatted_markdown_response, raw_data_summary)
+    3. Returns: (sql_query, natural_copilot_response, rows_data)
     """
     sql_query = "UNKNOWN"
     try:
@@ -274,21 +273,23 @@ async def run_text_to_sql_pipeline(user_query: str) -> tuple[str, str, str]:
         sql_query = await generate_sql_query(user_query)
 
         # 2. Execute SQL
-        columns, rows = await execute_safe_sql(sql_query)
+        _columns, rows = await execute_safe_sql(sql_query)
 
-        # 3. Format Response
-        markdown_response = format_sql_results_as_markdown(
-            user_query, sql_query, columns, rows
+        # 3. Format Natural Copilot Response
+        s = "s" if len(rows) != 1 else ""
+        natural_response = (
+            f"📊 **[Text-to-SQL Copilot]**\n\n"
+            f"Retrieved **{len(rows)} record{s}** from the transactional database. "
+            f"The executed SQL query and tabular records can be inspected in the sandbox below."
         )
-        return sql_query, markdown_response, f"{len(rows)} rows returned"
+        return sql_query, natural_response, rows
 
     except SQLSecurityViolation as sec_err:
-        # Security sandbox rejection
         err_msg = f"🛡️ **Security Sandbox Alert:** {sec_err!s}"
-        return "BLOCKED", err_msg, "0 rows"
+        return "BLOCKED", err_msg, []
     except Exception as e:
         err_msg = f"⚠️ **SQL Execution Error:** An issue occurred while running the query against PostgreSQL: `{e!s}`"
-        return sql_query, err_msg, "0 rows"
+        return sql_query, err_msg, []
 
 
 async def execute_text_to_sql(user_query: str) -> dict[str, Any]:
