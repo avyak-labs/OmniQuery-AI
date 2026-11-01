@@ -183,3 +183,85 @@ async def test_retrieve_context_uses_to_thread():
         # asyncio.to_thread should be called for both model.encode and rerank_passages
         assert spy_to_thread.call_count >= 2
 
+
+def test_router_does_not_hijack_from_preposition():
+    """
+    Challenge 2.1: Verifies that natural English prepositions like 'from' do not
+    misroute document RAG queries to Text-to-SQL.
+    """
+    from app.agents.router import classify_intent_node
+
+    q1 = "What is the remote work policy when working from home?"
+    res1 = classify_intent_node({"query": q1, "query_type": None})
+    assert res1["query_type"] == "rag", f"Query '{q1}' misrouted to '{res1['query_type']}'"
+
+    q2 = "How many days from delivery is the return policy?"
+    res2 = classify_intent_node({"query": q2, "query_type": None})
+    assert res2["query_type"] == "rag", f"Query '{q2}' misrouted to '{res2['query_type']}'"
+
+
+def test_sql_sandbox_blocks_system_catalogs():
+    """
+    Challenge 2.2: Verifies that SQL sandbox blocks access to PostgreSQL system
+    catalogs (pg_shadow, pg_catalog, information_schema).
+    """
+    from app.agents.sql_agent import SQLSecurityViolation, validate_and_sanitize_sql
+
+    with pytest.raises(SQLSecurityViolation, match=r"system catalog|prohibited"):
+        validate_and_sanitize_sql("SELECT usename, passwd FROM pg_shadow")
+
+    with pytest.raises(SQLSecurityViolation, match=r"system catalog|prohibited"):
+        validate_and_sanitize_sql("SELECT table_name FROM information_schema.tables")
+
+    with pytest.raises(SQLSecurityViolation, match=r"system catalog|prohibited"):
+        validate_and_sanitize_sql("SELECT * FROM pg_catalog.pg_tables")
+
+
+@pytest.mark.asyncio
+async def test_sql_execution_error_is_sanitized():
+    """
+    Challenge 2.2: Verifies that unhandled database execution exceptions are sanitized
+    and do not leak raw SQL error stack or internal connection details to client.
+    """
+    from app.agents.sql_agent import run_text_to_sql_pipeline
+
+    with (
+        patch("app.agents.sql_agent.generate_sql_query", new_callable=AsyncMock) as mock_gen,
+        patch("app.agents.sql_agent.execute_safe_sql", new_callable=AsyncMock) as mock_exec,
+    ):
+        mock_gen.return_value = "SELECT * FROM orders LIMIT 50"
+        mock_exec.side_effect = Exception(
+            "asyncpg.exceptions.ConnectionFailure: password auth failed for user omni_admin"
+        )
+
+        _sql_query, response, _rows = await run_text_to_sql_pipeline("Show orders")
+        assert "password auth failed" not in response
+        assert "omni_admin" not in response
+        assert "unexpected error occurred" in response.lower() or "please try again" in response.lower()
+
+
+def test_database_pool_pre_ping_configured():
+    """
+    Challenge 2.3: Verifies that SQLAlchemy async engine enables pool_pre_ping=True
+    to avoid stale connection drops during container/server restarts.
+    """
+    from app.database import engine
+
+    assert engine.pool._pre_ping is True, "engine.pool._pre_ping must be enabled (True)"
+
+
+def test_no_deprecated_utcnow_in_codebase():
+    """
+    Challenge 2.3: Python 3.12+ deprecates datetime.utcnow() in favor of
+    datetime.now(timezone.utc). Verify no deprecated calls exist in app modules.
+    """
+    import inspect
+
+    import app.eval.ragas_bench as ragas_mod
+    import app.rag.ingest as ingest_mod
+
+    assert "datetime.utcnow()" not in inspect.getsource(ingest_mod)
+    assert "datetime.utcnow()" not in inspect.getsource(ragas_mod)
+
+
+

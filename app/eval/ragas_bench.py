@@ -8,7 +8,7 @@ import io
 import json
 import os
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from dotenv import load_dotenv
@@ -187,7 +187,7 @@ def calculate_ragas_scores(eval_records: list[dict[str, Any]]) -> dict[str, floa
 
 def generate_markdown_scorecard(scores: dict[str, float], total_samples: int) -> str:
     """Generates an executive Markdown scorecard document for recruiters and GitHub."""
-    timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+    timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
 
     scorecard = f"""# 📊 OmniQuery-AI: Automated RAGAS Benchmark Scorecard
 

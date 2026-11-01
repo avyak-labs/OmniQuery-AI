@@ -10,7 +10,7 @@ Processes multi-page PDFs and text documents:
 import asyncio
 import os
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from pypdf import PdfReader
@@ -124,7 +124,7 @@ def chunk_documents(
                         **base_meta,
                         "chunk_sub_index": sub_idx,
                         "char_count": len(chunk_text),
-                        "created_at": datetime.utcnow().isoformat(),
+                        "created_at": datetime.now(UTC).isoformat(),
                     },
                 }
             )
@@ -148,11 +148,21 @@ def generate_embeddings(chunks: list[dict[str, Any]]) -> list[dict[str, Any]]:
 async def insert_chunks_to_db(chunks: list[dict[str, Any]]) -> int:
     """
     Persists document chunks into PostgreSQL with pgvector embeddings and tsvector full-text index.
+    Idempotent: removes existing chunks for the same document_id before inserting new records.
     """
     if not chunks:
         return 0
 
+    unique_doc_ids = list({c["document_id"] for c in chunks if "document_id" in c})
+
     async with AsyncSessionLocal() as session:
+        # Guarantee idempotency: clean out existing records for this document_id
+        for doc_id in unique_doc_ids:
+            await session.execute(
+                text("DELETE FROM document_chunks WHERE document_id = :doc_id;"),
+                {"doc_id": doc_id},
+            )
+
         insert_query = text("""
             INSERT INTO document_chunks (
                 document_id, document_name, chunk_index, content, embedding, tsv_content, metadata_json

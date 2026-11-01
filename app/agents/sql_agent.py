@@ -86,14 +86,28 @@ FORBIDDEN_SQL_KEYWORDS = [
     r"\bPG_SLEEP\b",
 ]
 
+SYSTEM_CATALOG_KEYWORDS = [
+    r"\bPG_CATALOG\b",
+    r"\bINFORMATION_SCHEMA\b",
+    r"\bPG_SHADOW\b",
+    r"\bPG_USER\b",
+    r"\bPG_ROLES\b",
+    r"\bPG_AUTHID\b",
+    r"\bPG_STAT_ACTIVITY\b",
+    r"\bPG_TABLES\b",
+    r"\bPG_DATABASE\b",
+    r"\bPG_SETTINGS\b",
+]
+
 
 def validate_and_sanitize_sql(raw_sql: str) -> str:
     """
     Strict SQL validation sandbox:
     1. Extracts pure SQL (strips markdown code blocks and inline comments).
     2. Blocks mutation and DDL keywords (prevents SQL injection).
-    3. Guarantees query starts with SELECT or WITH.
-    4. Appends LIMIT 50 if no limit is specified to avoid memory exhaustion.
+    3. Blocks PostgreSQL system catalog inspection (prevents reconnaissance).
+    4. Guarantees query starts with SELECT or WITH.
+    5. Appends LIMIT 50 if no limit is specified to avoid memory exhaustion.
     """
     # 1. Clean markdown formatting
     cleaned = raw_sql.strip()
@@ -121,13 +135,21 @@ def validate_and_sanitize_sql(raw_sql: str) -> str:
                 f"Security Violation: Destructive SQL command '{matched_kw}' is strictly prohibited."
             )
 
-    # 4. Enforce read-only prefix (SELECT or WITH for CTEs)
+    # 4. Disallow system catalog and metadata table inspection
+    for pattern in SYSTEM_CATALOG_KEYWORDS:
+        if re.search(pattern, cleaned, flags=re.IGNORECASE):
+            matched_kw = re.search(pattern, cleaned, flags=re.IGNORECASE).group()
+            raise SQLSecurityViolation(
+                f"Security Violation: Access to system catalog or schema '{matched_kw}' is strictly prohibited."
+            )
+
+    # 5. Enforce read-only prefix (SELECT or WITH for CTEs)
     if not (cleaned.upper().startswith("SELECT") or cleaned.upper().startswith("WITH")):
         raise SQLSecurityViolation(
             "Security Violation: Only read-only SELECT or WITH statements are allowed."
         )
 
-    # 5. Append safety LIMIT if missing
+    # 6. Append safety LIMIT if missing
     if not re.search(r"\bLIMIT\b", cleaned, flags=re.IGNORECASE):
         cleaned += " LIMIT 50"
 
@@ -288,7 +310,11 @@ async def run_text_to_sql_pipeline(user_query: str) -> tuple[str, str, Any]:
         err_msg = f"🛡️ **Security Sandbox Alert:** {sec_err!s}"
         return "BLOCKED", err_msg, []
     except Exception as e:
-        err_msg = f"⚠️ **SQL Execution Error:** An issue occurred while running the query against PostgreSQL: `{e!s}`"
+        print(f"[SECURITY ALERT] SQL execution internal failure: {e}")
+        err_msg = (
+            "⚠️ **SQL Execution Error:** An unexpected error occurred while executing the database query. "
+            "Please refine your query or contact an administrator."
+        )
         return sql_query, err_msg, []
 
 

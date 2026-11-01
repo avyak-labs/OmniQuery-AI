@@ -34,7 +34,13 @@ def classify_intent_node(state: AgentState) -> AgentState:
         state["query_type"] = "direct"
         return state
 
-    # SQL indicators: numbers, count, sales, revenue, totals, database tables, raw sql
+    # 1. Direct raw SQL detection (e.g. injection tests, explicit SQL commands)
+    raw_sql_pattern = r"^\s*(select|with|insert|update|delete|drop|alter)\b"
+    if re.search(raw_sql_pattern, query, re.IGNORECASE) or "drop table" in query or "insert into" in query:
+        state["query_type"] = "sql"
+        return state
+
+    # 2. SQL indicators: numbers, count, sales, revenue, totals, transactional tables
     sql_keywords = [
         "how many",
         "count",
@@ -44,18 +50,16 @@ def classify_intent_node(state: AgentState) -> AgentState:
         "average",
         "highest",
         "lowest",
-        "list all users",
+        "list all",
         "orders",
         "customers",
         "products",
         "stock",
-        "select",
-        "from",
-        "drop table",
-        "insert into",
+        "transaction",
+        "order items",
     ]
 
-    # Document RAG indicators: explain, policy, guide, summary, what is, how to, return, SLA, error
+    # 3. Document RAG indicators: explain, policy, guide, summary, what is, how to, return, SLA, error
     doc_keywords = [
         "what is",
         "how do i",
@@ -71,7 +75,21 @@ def classify_intent_node(state: AgentState) -> AgentState:
         "sla",
         "warranty",
         "err_",
+        "guide",
+        "remote work",
+        "return",
     ]
+
+    strong_doc_triggers = {
+        "policy",
+        "documentation",
+        "terms",
+        "guide",
+        "warranty",
+        "sla",
+        "mfa",
+        "reimbursement",
+    }
 
     def matches_keyword(pattern: str, text: str) -> bool:
         # If pattern ends with an underscore (like prefix err_), match without trailing boundary
@@ -79,10 +97,19 @@ def classify_intent_node(state: AgentState) -> AgentState:
             return bool(re.search(r"\b" + re.escape(pattern), text))
         return bool(re.search(r"\b" + re.escape(pattern) + r"\b", text))
 
-    if any(matches_keyword(k, query) for k in sql_keywords):
-        state["query_type"] = "sql"
-    elif any(matches_keyword(k, query) for k in doc_keywords):
+    # Calculate matched keyword weights
+    sql_score = sum(len(k.split()) for k in sql_keywords if matches_keyword(k, query))
+    doc_score = sum(len(k.split()) for k in doc_keywords if matches_keyword(k, query))
+    has_strong_doc = any(matches_keyword(t, query) for t in strong_doc_triggers)
+
+    if has_strong_doc and doc_score >= sql_score:
         state["query_type"] = "rag"
+    elif sql_score > doc_score:
+        state["query_type"] = "sql"
+    elif doc_score > sql_score:
+        state["query_type"] = "rag"
+    elif sql_score > 0:
+        state["query_type"] = "rag" if doc_score > 0 else "sql"
     else:
         state["query_type"] = "direct"
 
