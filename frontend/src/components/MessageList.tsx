@@ -7,14 +7,89 @@ import CitationCards from './CitationCards';
 
 interface MessageListProps {
   messages: Message[];
+  onSelectPrompt?: (prompt: string) => void;
 }
 
-const MessageList: FC<MessageListProps> = ({ messages }) => {
+const STARTER_PROMPTS = [
+  {
+    icon: '🛡️',
+    type: 'HYBRID RAG',
+    typeClass: 'rag',
+    prompt: 'What is the MFA policy and password rotation requirement?',
+    desc: 'Dense pgvector + BM25 retrieval against Enterprise Security policies.',
+  },
+  {
+    icon: '📊',
+    type: 'TEXT-TO-SQL',
+    typeClass: 'sql',
+    prompt: 'How many total orders are in Pending status?',
+    desc: 'Autonomous copilot aggregating relational orders within read-only sandbox.',
+  },
+  {
+    icon: '💼',
+    type: 'HYBRID RAG',
+    typeClass: 'rag',
+    prompt: 'What is the company remote work and internet reimbursement policy?',
+    desc: 'Cross-encoder reranked context from employee handbook documentation.',
+  },
+  {
+    icon: '📈',
+    type: 'TEXT-TO-SQL',
+    typeClass: 'sql',
+    prompt: 'Show the top 5 highest value customer orders with totals',
+    desc: 'Relational multi-table JOINs and formatting with markdown tables.',
+  },
+];
+
+const MessageList: FC<MessageListProps> = ({ messages, onSelectPrompt }) => {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  if (messages.length === 0) {
+    return (
+      <div className="welcome-container">
+        <div className="welcome-badge">
+          <span>⚡</span> Tier-1 Enterprise AI Copilot
+        </div>
+        <h1 className="welcome-title">OmniQuery-AI Console</h1>
+        <p className="welcome-subtitle">
+          Query unstructured enterprise policies via Hybrid RAG or analyze real-time transactional
+          metrics using the autonomous Text-to-SQL copilot.
+        </p>
+
+        <div className="welcome-grid">
+          {STARTER_PROMPTS.map((item, idx) => (
+            <div
+              key={idx}
+              className="welcome-card"
+              onClick={() => onSelectPrompt?.(item.prompt)}
+              role="button"
+              tabIndex={0}
+            >
+              <div className="welcome-card-header">
+                <span className="welcome-card-icon">{item.icon}</span>
+                <span
+                  className="welcome-card-badge"
+                  style={{
+                    color: item.typeClass === 'sql' ? 'var(--route-sql)' : 'var(--route-rag)',
+                    background: item.typeClass === 'sql' ? 'var(--route-sql-bg)' : 'var(--route-rag-bg)',
+                    border: `1px solid ${item.typeClass === 'sql' ? 'var(--route-sql-border)' : 'var(--route-rag-border)'}`,
+                  }}
+                >
+                  {item.type}
+                </span>
+              </div>
+              <div className="welcome-card-prompt">{item.prompt}</div>
+              <div className="welcome-card-desc">{item.desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="chat-scroll">

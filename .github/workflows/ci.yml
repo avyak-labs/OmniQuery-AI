@@ -49,13 +49,19 @@ jobs:
 
       - name: Code Quality & Syntax Check (Ruff Linting)
         run: |
-          ruff check app/ tests/
+          ruff check app/ tests/ spaces/
 
       - name: Seed Database Schema & Vector Data
         env:
           DATABASE_URL: postgresql+asyncpg://omni_user:omni_password@localhost:5433/omniquery_db
         run: |
           python -m app.db_seed
+
+      - name: Seed Vector Documents (RAG Corpus)
+        env:
+          DATABASE_URL: postgresql+asyncpg://omni_user:omni_password@localhost:5433/omniquery_db
+        run: |
+          python -m app.rag.ingest
 
       - name: Execute Full Pytest Test Suite
         env:
@@ -69,3 +75,10 @@ jobs:
           DATABASE_URL: postgresql+asyncpg://omni_user:omni_password@localhost:5433/omniquery_db
         run: |
           pytest tests/test_ragas_bench.py -v
+
+      - name: Frontend Typecheck & Build
+        run: |
+          cd frontend
+          npm ci
+          npm run lint
+          npm run build

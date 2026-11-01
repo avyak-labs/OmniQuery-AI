@@ -16,7 +16,7 @@ const SqlInspector: FC<SqlInspectorProps> = ({ sqlQuery, sqlResult }) => {
           <span>🔍</span> Executed Safe SQL (Read-Only Sandbox)
         </span>
         <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', color: 'var(--text-dim)' }}>
-          0.014s latency
+          PostgreSQL Kernel Isolated (Safe Read-Only)
         </span>
       </div>
 
@@ -44,9 +44,11 @@ const SqlInspector: FC<SqlInspectorProps> = ({ sqlQuery, sqlResult }) => {
                     const isStatus = col.toLowerCase().includes('status');
 
                     let statusColor = '#94a3b8';
-                    if (val.toLowerCase() === 'shipped') statusColor = '#38bdf8';
-                    else if (val.toLowerCase() === 'processing') statusColor = '#fbbf24';
-                    else if (val.toLowerCase() === 'delivered') statusColor = '#34d399';
+                    const s = val.toLowerCase();
+                    if (s === 'completed' || s === 'delivered') statusColor = '#34d399';
+                    else if (s === 'pending' || s === 'processing') statusColor = '#fbbf24';
+                    else if (s === 'cancelled' || s === 'failed') statusColor = '#f87171';
+                    else if (s === 'shipped') statusColor = '#38bdf8';
 
                     return (
                       <td

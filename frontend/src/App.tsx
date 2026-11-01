@@ -225,6 +225,40 @@ function App() {
     }
   }, [activeSessionId]);
 
+  const handleExportData = () => {
+    if (!activeSession) return;
+    const exportPayload = {
+      sessionId: activeSession.id,
+      sessionTitle: activeSession.title,
+      exportedAt: new Date().toISOString(),
+      messageCount: activeSession.messages.length,
+      messages: activeSession.messages.map(m => ({
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        route: m.metadata?.route_selected || null,
+        sqlQuery: m.metadata?.sql_query || null,
+        sqlResult: m.metadata?.sql_result || null,
+        citations: m.metadata?.retrieved_chunks || [],
+      })),
+    };
+    const blob = new Blob([JSON.stringify(exportPayload, null, 2)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const sanitizedTitle = activeSession.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .slice(0, 30);
+    link.download = `omniquery_audit_${sanitizedTitle || 'session'}_${Date.now()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', background: 'var(--bg-base)' }}>
       {/* Sidebar */}
@@ -252,14 +286,14 @@ function App() {
               <span>{theme === 'dark' ? '☀️' : '🌙'}</span>
               <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
             </button>
-            <button className="icon-btn" onClick={() => alert('Exporting audit transcript...')}>
+            <button className="icon-btn" onClick={handleExportData} title="Download Audit Transcript (JSON)">
               Export Data
             </button>
           </div>
         </header>
 
         {/* Conversation Stream or Clean Welcome State */}
-        <MessageList messages={messages} />
+        <MessageList messages={messages} onSelectPrompt={handleSubmit} />
 
         {/* Input Bar */}
         <ChatInput onSubmit={handleSubmit} isStreaming={isStreaming} />

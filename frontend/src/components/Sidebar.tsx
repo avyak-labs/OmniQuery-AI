@@ -1,4 +1,4 @@
-import { type FC } from 'react';
+import { type FC, useMemo, useState } from 'react';
 import type { Session, SystemConnection } from '../types';
 
 interface SidebarProps {
@@ -16,17 +16,19 @@ const Sidebar: FC<SidebarProps> = ({
   onSelectSession,
   onNewSession,
 }) => {
-  const nonEmptySessions = sessions.filter(s => s.messages.length > 0);
-
-  const now = Date.now();
-  const oneDayMs = 24 * 60 * 60 * 1000;
-
-  const todaySessions = nonEmptySessions.filter(
-    s => now - new Date(s.createdAt).getTime() < oneDayMs
-  );
-  const pastSessions = nonEmptySessions.filter(
-    s => now - new Date(s.createdAt).getTime() >= oneDayMs
-  );
+  const [mountTime] = useState(() => Date.now());
+  const { todaySessions, pastSessions } = useMemo(() => {
+    const nonEmpty = sessions.filter(s => s.messages.length > 0);
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    return {
+      todaySessions: nonEmpty.filter(
+        s => mountTime - new Date(s.createdAt).getTime() < oneDayMs
+      ),
+      pastSessions: nonEmpty.filter(
+        s => mountTime - new Date(s.createdAt).getTime() >= oneDayMs
+      ),
+    };
+  }, [sessions, mountTime]);
 
   return (
     <aside className="sidebar">
