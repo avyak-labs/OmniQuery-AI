@@ -216,7 +216,7 @@ async def ingest_pipeline(
         docs = get_sample_enterprise_docs()
 
     chunks = chunk_documents(docs)
-    embedded_chunks = generate_embeddings(chunks)
+    embedded_chunks = await asyncio.to_thread(generate_embeddings, chunks)
     total_saved = await insert_chunks_to_db(embedded_chunks)
     return total_saved
 

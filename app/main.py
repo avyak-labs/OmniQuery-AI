@@ -1,5 +1,7 @@
 import asyncio
 import json
+import os
+import re
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
@@ -29,9 +31,15 @@ app = FastAPI(
 )
 
 # Enable CORS for Next.js / Vite web console and external integrations
+cors_origins_env = os.getenv(
+    "CORS_ORIGINS",
+    "http://localhost:3000,http://localhost:5173,http://localhost:8501",
+)
+allowed_origins = [orig.strip() for orig in cors_origins_env.split(",") if orig.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -188,12 +196,41 @@ async def stream_query(request: QueryRequest):
             serialized_chunks = []
             for c in raw_chunks:
                 if isinstance(c, dict):
-                    meta = c.get("metadata") or {}
+                    meta = c.get("metadata_json") or c.get("metadata") or {}
+                    source = (
+                        c.get("document_name")
+                        or (meta.get("document_name") if isinstance(meta, dict) else None)
+                        or (meta.get("source") if isinstance(meta, dict) else None)
+                        or "Enterprise Knowledge Base"
+                    )
+                    page_val = (
+                        (meta.get("page_number") if isinstance(meta, dict) else None)
+                        or (meta.get("page") if isinstance(meta, dict) else None)
+                        or 1
+                    )
+                    try:
+                        page = int(page_val)
+                    except (ValueError, TypeError):
+                        page = 1
+
+                    raw_score = c.get("rerank_score")
+                    if raw_score is None:
+                        raw_score = c.get("rrf_score")
+                    if raw_score is None:
+                        raw_score = c.get("score")
+                    if raw_score is None:
+                        raw_score = 0.0
+
+                    try:
+                        score_val = round(float(raw_score), 4)
+                    except (ValueError, TypeError):
+                        score_val = 0.0
+
                     serialized_chunks.append({
                         "content": c.get("content", ""),
-                        "source": meta.get("source", "Enterprise Knowledge Base") if isinstance(meta, dict) else "Enterprise Knowledge Base",
-                        "page": meta.get("page", 1) if isinstance(meta, dict) else 1,
-                        "score": round(float(c.get("score", 0.0)), 4) if c.get("score") is not None else 0.0,
+                        "source": source,
+                        "page": page,
+                        "score": score_val,
                     })
 
             metadata = {
@@ -207,11 +244,11 @@ async def stream_query(request: QueryRequest):
             # 2. Emit Token Stream
             response_text = result.get("response", "")
             if response_text:
-                words = response_text.split(" ")
-                for word in words:
-                    token_payload = {"token": word + " "}
+                tokens = re.findall(r"\S+|\s+", response_text)
+                for tok in tokens:
+                    token_payload = {"token": tok}
                     yield f"event: token\ndata: {json.dumps(token_payload)}\n\n"
-                    await asyncio.sleep(0.02)
+                    await asyncio.sleep(0.01)
 
             # 3. Emit Done Event
             yield f"event: done\ndata: {json.dumps({'status': 'complete'})}\n\n"

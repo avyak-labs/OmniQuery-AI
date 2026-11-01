@@ -7,6 +7,7 @@ Combines:
 4. FlashRank Cross-Encoder Re-ranking
 """
 
+import asyncio
 from typing import Any
 
 from sqlalchemy import text
@@ -107,9 +108,11 @@ async def retrieve_context(query: str, top_k: int = 3) -> list[dict[str, Any]]:
     if not clean_query:
         return []
 
-    # 1. Embed query
+    # 1. Embed query (offload CPU-bound ML inference from event loop)
     model = get_embedding_model()
-    query_vector = model.encode(clean_query, normalize_embeddings=True).tolist()
+    query_vector = await asyncio.to_thread(
+        lambda: model.encode(clean_query, normalize_embeddings=True).tolist()
+    )
 
     # 2. Hybrid search with oversampling (fetch 2x candidates)
     candidate_limit = max(top_k * 3, 10)
@@ -119,6 +122,8 @@ async def retrieve_context(query: str, top_k: int = 3) -> list[dict[str, Any]]:
         candidate_fetch_limit=candidate_limit,
     )
 
-    # 3. FlashRank Cross-Encoder Re-ranking
-    final_ranked_chunks = rerank_passages(clean_query, fused_candidates, top_n=top_k)
+    # 3. FlashRank Cross-Encoder Re-ranking (offload CPU-bound inference from event loop)
+    final_ranked_chunks = await asyncio.to_thread(
+        rerank_passages, clean_query, fused_candidates, top_n=top_k
+    )
     return final_ranked_chunks

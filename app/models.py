@@ -64,6 +64,14 @@ class DocumentChunk(Base):
         Index("ix_document_chunks_tsv", "tsv_content", postgresql_using="gin"),
         # Standard index on document_id and chunk_index
         Index("ix_document_chunks_doc_chunk", "document_id", "chunk_index"),
+        # HNSW vector index for high-speed cosine vector ANN search
+        Index(
+            "ix_document_chunks_embedding_hnsw",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_with={"m": 16, "ef_construction": 64},
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+        ),
     )
 
     def __repr__(self) -> str:
