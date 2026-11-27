@@ -89,6 +89,7 @@ OmniQuery-AI/
 
 ## 📚 Technical Documentation & Architecture Guides
 
+* **[Teammate & New-Laptop Bot Setup Guide](docs/bot_setup.md)**: Complete onboarding walkthrough for the OmniQuery-AI application, local Ollama integration, and the Orca bot environment.
 * **[Master Architecture & Concept Modules (01–15)](docs/README.md)**: In-depth technical guides covering Dense Embeddings, BM25, RRF, Cross-Encoders, LangGraph, RAGAS, and Context Engineering.
 * **[Project Requirements & Architecture Specification](PROJECT_REQUIREMENTS_AND_ARCHITECTURE.md)**: End-to-end architectural blueprints and system flow diagrams.
 * **[Real-World Use Cases & Target State](REAL_WORLD_USE_CASES_AND_TARGET_STATE.md)**: Enterprise problem statements, target states, and edge cases.
