@@ -77,6 +77,7 @@ flowchart TD
 
 ## 🎯 High-Level Architecture & Specifications
 
+* **Teammate & New-Laptop Bot Setup Guide:** [bot_setup.md](bot_setup.md)
 * **Project Requirements & Architecture:** [PROJECT_REQUIREMENTS_AND_ARCHITECTURE.md](file:///Users/jnarayanassamy/personal/kids/canishe_rahul/OmniQuery-AI/PROJECT_REQUIREMENTS_AND_ARCHITECTURE.md)
 * **Real-World Use Cases & Target State:** [REAL_WORLD_USE_CASES_AND_TARGET_STATE.md](file:///Users/jnarayanassamy/personal/kids/canishe_rahul/OmniQuery-AI/REAL_WORLD_USE_CASES_AND_TARGET_STATE.md)
 * **Recommended Learning Resources:** [RECOMMENDED_LEARNING_RESOURCES.md](file:///Users/jnarayanassamy/personal/kids/canishe_rahul/OmniQuery-AI/docs/RECOMMENDED_LEARNING_RESOURCES.md)
